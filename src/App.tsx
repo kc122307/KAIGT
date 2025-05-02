@@ -18,6 +18,7 @@ import LeaderboardPage from "./pages/LeaderboardPage";
 import GoalsPage from "./pages/GoalsPage";
 import TasksPage from "./pages/TasksPage";
 import ProgressPage from "./pages/ProgressPage";
+import SettingsPage from "./pages/SettingsPage";
 
 // Set up QueryClient
 const queryClient = new QueryClient();
@@ -42,10 +43,10 @@ const App = () => (
               <Route path="/activity" element={<ActivityPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route path="/leaderboard" element={<LeaderboardPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
               
               {/* Placeholder routes - redirect to root for now */}
               <Route path="/teams" element={<Navigate to="/" replace />} />
-              <Route path="/settings" element={<Navigate to="/" replace />} />
             </Route>
             
             {/* Catch-all NotFound route */}

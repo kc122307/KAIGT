@@ -9,6 +9,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AddGoalModal } from "../components/Dashboard/AddGoalModal";
 import { GoalCategory, GoalStatus } from "../types";
 
+// Get the proper types from GoalFilters and AddGoalModal components
+interface GoalFiltersProps {
+  filterCategory: GoalCategory | 'All';
+  filterStatus: GoalStatus | 'All';
+  onCategoryChange: (category: GoalCategory | 'All') => void;
+  onStatusChange: (status: GoalStatus | 'All') => void;
+}
+
+interface AddGoalModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
 const GoalsPage = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const filterCategory = useGoalStore(state => state.filterCategory);
