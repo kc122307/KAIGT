@@ -3,13 +3,19 @@ import { GoalCategory, GoalStatus } from '../../types';
 import { useGoalStore } from '../../store/goalStore';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
-export const GoalFilters = () => {
-  const { 
-    filterCategory, 
-    filterStatus, 
-    setFilterCategory, 
-    setFilterStatus 
-  } = useGoalStore();
+interface GoalFiltersProps {
+  filterCategory: GoalCategory | 'All';
+  filterStatus: GoalStatus | 'All';
+  onCategoryChange: (category: GoalCategory | 'All') => void;
+  onStatusChange: (status: GoalStatus | 'All') => void;
+}
+
+export const GoalFilters = ({ 
+  filterCategory, 
+  filterStatus, 
+  onCategoryChange, 
+  onStatusChange 
+}: GoalFiltersProps) => {
   
   const categories: (GoalCategory | 'All')[] = [
     'All', 
@@ -35,7 +41,7 @@ export const GoalFilters = () => {
         <ToggleGroup 
           type="single" 
           value={filterCategory} 
-          onValueChange={(value) => value && setFilterCategory(value as GoalCategory | 'All')}
+          onValueChange={(value) => value && onCategoryChange(value as GoalCategory | 'All')}
           className="flex flex-wrap gap-2"
         >
           {categories.map((category) => (
@@ -57,7 +63,7 @@ export const GoalFilters = () => {
         <ToggleGroup 
           type="single" 
           value={filterStatus} 
-          onValueChange={(value) => value && setFilterStatus(value as GoalStatus | 'All')}
+          onValueChange={(value) => value && onStatusChange(value as GoalStatus | 'All')}
           className="flex flex-wrap gap-2"
         >
           {statuses.map((status) => (

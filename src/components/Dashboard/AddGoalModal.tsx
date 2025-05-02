@@ -29,8 +29,9 @@ import { Goal, GoalCategory } from '../../types';
 import { useForm } from 'react-hook-form';
 import { useGoalStore } from '../../store/goalStore';
 
-interface AddGoalModalProps {
-  onClose: () => void;
+export interface AddGoalModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 interface GoalFormValues {
@@ -41,7 +42,7 @@ interface GoalFormValues {
   isPublic: boolean;
 }
 
-export const AddGoalModal = ({ onClose }: AddGoalModalProps) => {
+export const AddGoalModal = ({ open, onOpenChange }: AddGoalModalProps) => {
   const { addGoal } = useGoalStore();
   
   const form = useForm<GoalFormValues>({
@@ -64,7 +65,7 @@ export const AddGoalModal = ({ onClose }: AddGoalModalProps) => {
       deadline: values.deadline,
       isPublic: values.isPublic,
     });
-    onClose();
+    onOpenChange(false);
   };
   
   const categories: GoalCategory[] = [
@@ -77,7 +78,7 @@ export const AddGoalModal = ({ onClose }: AddGoalModalProps) => {
   ];
   
   return (
-    <Dialog open onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add New Goal</DialogTitle>
@@ -204,7 +205,7 @@ export const AddGoalModal = ({ onClose }: AddGoalModalProps) => {
             />
             
             <div className="flex justify-between pt-2">
-              <Button type="button" variant="outline" onClick={onClose}>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
               <Button type="submit">Create Goal</Button>
