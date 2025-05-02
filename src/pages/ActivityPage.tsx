@@ -16,6 +16,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Activity } from "../types";
 
 const ActivityPage = () => {
   const [timeFilter, setTimeFilter] = useState<string>("all");
@@ -46,8 +47,8 @@ const ActivityPage = () => {
   };
 
   // Group activities by date
-  const groupActivitiesByDate = (activities: typeof useGoalStore.getState().activities) => {
-    const grouped: Record<string, typeof activities> = {};
+  const groupActivitiesByDate = (activities: Activity[]) => {
+    const grouped: Record<string, Activity[]> = {};
     
     activities.forEach(activity => {
       const date = new Date(activity.timestamp).toDateString();
