@@ -12,7 +12,7 @@ import { useState } from 'react';
 import { AddGoalModal } from './AddGoalModal';
 
 export const Dashboard = () => {
-  const { filterCategory, filterStatus, goals, currentUser } = useGoalStore();
+  const { filterCategory, filterStatus, setFilterCategory, setFilterStatus, goals, currentUser } = useGoalStore();
   const [showAddModal, setShowAddModal] = useState(false);
   
   // Filter goals based on selected filters and user
@@ -41,7 +41,12 @@ export const Dashboard = () => {
           
           <Stats />
           
-          <GoalFilters />
+          <GoalFilters 
+            filterCategory={filterCategory}
+            filterStatus={filterStatus}
+            onCategoryChange={setFilterCategory}
+            onStatusChange={setFilterStatus}
+          />
           
           <GoalList goals={filteredGoals} />
           
@@ -58,7 +63,12 @@ export const Dashboard = () => {
         </div>
       </div>
       
-      {showAddModal && <AddGoalModal onClose={() => setShowAddModal(false)} />}
+      {showAddModal && (
+        <AddGoalModal 
+          open={showAddModal} 
+          onOpenChange={setShowAddModal}
+        />
+      )}
     </div>
   );
 };
