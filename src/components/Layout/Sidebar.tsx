@@ -69,12 +69,7 @@ export const Sidebar = ({ open }: SidebarProps) => {
   const location = useLocation();
   
   return (
-    <aside
-      className={cn(
-        "fixed inset-y-0 left-0 z-20 flex w-64 flex-col border-r bg-background transition-transform lg:translate-x-0 lg:border-r lg:bg-sidebar",
-        open ? "translate-x-0" : "-translate-x-full"
-      )}
-    >
+    <div className="h-full flex flex-col bg-background border-r">
       <div className="flex h-16 items-center border-b px-6">
         <Link to="/" className="flex items-center gap-2">
           <span className="font-bold text-xl">GoalTracker</span>
@@ -102,6 +97,6 @@ export const Sidebar = ({ open }: SidebarProps) => {
           })}
         </nav>
       </div>
-    </aside>
+    </div>
   );
 };
