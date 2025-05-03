@@ -18,6 +18,7 @@ export const getUserNotifications = async (userId: string): Promise<Notification
   return data.map(notification => ({
     ...notification,
     timestamp: new Date(notification.timestamp),
+    type: notification.type as Notification['type']
   }));
 };
 
@@ -56,6 +57,7 @@ export const addNotification = async (notificationData: Omit<Notification, 'id' 
   return {
     ...data,
     timestamp: new Date(data.timestamp),
+    type: data.type as Notification['type']
   };
 };
 
@@ -76,6 +78,7 @@ export const markNotificationAsRead = async (notificationId: string): Promise<No
   return {
     ...data,
     timestamp: new Date(data.timestamp),
+    type: data.type as Notification['type']
   };
 };
 

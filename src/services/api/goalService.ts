@@ -20,6 +20,8 @@ export const getGoals = async (): Promise<Goal[]> => {
     deadline: new Date(goal.deadline),
     created_at: new Date(goal.created_at),
     updated_at: new Date(goal.updated_at),
+    category: goal.category as GoalCategory,
+    status: goal.status as GoalStatus
   }));
 };
 
@@ -40,6 +42,8 @@ export const getUserGoals = async (userId: string): Promise<Goal[]> => {
     deadline: new Date(goal.deadline),
     created_at: new Date(goal.created_at),
     updated_at: new Date(goal.updated_at),
+    category: goal.category as GoalCategory,
+    status: goal.status as GoalStatus
   }));
 };
 
@@ -65,6 +69,8 @@ export const getGoalById = async (goalId: string): Promise<Goal | undefined> => 
     deadline: new Date(data.deadline),
     created_at: new Date(data.created_at),
     updated_at: new Date(data.updated_at),
+    category: data.category as GoalCategory,
+    status: data.status as GoalStatus
   };
 };
 
@@ -96,6 +102,8 @@ export const createGoal = async (goalData: Omit<Goal, 'id' | 'created_at' | 'upd
     deadline: new Date(data.deadline),
     created_at: new Date(data.created_at),
     updated_at: new Date(data.updated_at),
+    category: data.category as GoalCategory,
+    status: data.status as GoalStatus
   };
   
   // Add activity record
@@ -117,10 +125,16 @@ export const updateGoal = async (goalId: string, updates: Partial<Goal>): Promis
     throw new Error("User not authenticated");
   }
   
-  // Format date fields
-  const formattedUpdates = { ...updates };
+  // Format date fields and prepare updates for Supabase
+  const formattedUpdates: Record<string, any> = { ...updates };
   if (updates.deadline && updates.deadline instanceof Date) {
     formattedUpdates.deadline = updates.deadline.toISOString();
+  }
+  if (updates.created_at && updates.created_at instanceof Date) {
+    delete formattedUpdates.created_at; // Don't update created_at
+  }
+  if (updates.updated_at && updates.updated_at instanceof Date) {
+    delete formattedUpdates.updated_at; // Let DB handle this
   }
   
   const { data, error } = await supabase
@@ -140,6 +154,8 @@ export const updateGoal = async (goalId: string, updates: Partial<Goal>): Promis
     deadline: new Date(data.deadline),
     created_at: new Date(data.created_at),
     updated_at: new Date(data.updated_at),
+    category: data.category as GoalCategory,
+    status: data.status as GoalStatus
   };
   
   // Add activity record
@@ -192,6 +208,8 @@ export const updateGoalStatus = async (goalId: string, status: GoalStatus): Prom
     deadline: new Date(data.deadline),
     created_at: new Date(data.created_at),
     updated_at: new Date(data.updated_at),
+    category: data.category as GoalCategory,
+    status: data.status as GoalStatus
   };
   
   const actionType = status === 'Completed' ? 'completed' : 'updated';
@@ -267,6 +285,8 @@ export const updateGoalProgress = async (goalId: string, progress: number): Prom
     deadline: new Date(data.deadline),
     created_at: new Date(data.created_at),
     updated_at: new Date(data.updated_at),
+    category: data.category as GoalCategory,
+    status: data.status as GoalStatus
   };
   
   // Add activity record
@@ -349,5 +369,7 @@ export const getFilteredGoals = async (
     deadline: new Date(goal.deadline),
     created_at: new Date(goal.created_at),
     updated_at: new Date(goal.updated_at),
+    category: goal.category as GoalCategory,
+    status: goal.status as GoalStatus
   }));
 };
