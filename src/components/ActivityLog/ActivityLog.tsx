@@ -26,14 +26,14 @@ export const ActivityLog = ({
   
   // Filter by user ID if specified, or default to current user
   if (userId) {
-    filteredActivities = filteredActivities.filter(activity => activity.userId === userId);
+    filteredActivities = filteredActivities.filter(activity => activity.user_id === userId);
   } else if (currentUser) {
-    filteredActivities = filteredActivities.filter(activity => activity.userId === currentUser.id);
+    filteredActivities = filteredActivities.filter(activity => activity.user_id === currentUser.id);
   }
   
   // Filter by goal ID if specified
   if (goalId) {
-    filteredActivities = filteredActivities.filter(activity => activity.goalId === goalId);
+    filteredActivities = filteredActivities.filter(activity => activity.goal_id === goalId);
   }
   
   // Sort activities by timestamp (newest first)
@@ -47,7 +47,7 @@ export const ActivityLog = ({
   }
   
   const getActivityIcon = (activity: Activity) => {
-    switch (activity.actionType) {
+    switch (activity.action_type) {
       case 'created':
         return '➕';
       case 'updated':

@@ -1,4 +1,3 @@
-
 import { useGoalStore } from "../store/goalStore";
 import { format } from "date-fns";
 import { Bell, Calendar, Clock, Trophy, Users } from "lucide-react";
@@ -11,7 +10,7 @@ const NotificationsPage = () => {
   const sortedNotifications = [...notifications]
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     
-  const unreadCount = sortedNotifications.filter(n => !n.isRead).length;
+  const unreadCount = sortedNotifications.filter(n => !n.is_read).length;
   
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -51,7 +50,7 @@ const NotificationsPage = () => {
           sortedNotifications.map(notification => (
             <Card 
               key={notification.id} 
-              className={`p-4 ${!notification.isRead ? 'border-l-4 border-l-primary' : ''}`}
+              className={`p-4 ${!notification.is_read ? 'border-l-4 border-l-primary' : ''}`}
             >
               <div className="flex gap-4">
                 <div className={`p-2 rounded-full ${
@@ -71,7 +70,7 @@ const NotificationsPage = () => {
                         {format(new Date(notification.timestamp), "MMM d, yyyy 'at' h:mm a")}
                       </p>
                     </div>
-                    {!notification.isRead && (
+                    {!notification.is_read && (
                       <Button 
                         variant="ghost" 
                         size="sm"

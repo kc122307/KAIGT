@@ -63,7 +63,7 @@ export const AddGoalModal = ({ open, onOpenChange }: AddGoalModalProps) => {
       status: 'Pending',
       progress: 0,
       deadline: values.deadline,
-      isPublic: values.isPublic,
+      is_public: values.isPublic,
     });
     onOpenChange(false);
   };

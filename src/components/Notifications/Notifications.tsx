@@ -14,7 +14,7 @@ export const Notifications = () => {
   const sortedNotifications = [...notifications]
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   
-  const unreadNotifications = sortedNotifications.filter(n => !n.isRead);
+  const unreadNotifications = sortedNotifications.filter(n => !n.is_read);
   const hasUnread = unreadNotifications.length > 0;
   
   const getNotificationIcon = (type: Notification["type"]) => {
@@ -66,7 +66,7 @@ export const Notifications = () => {
               <div 
                 key={notification.id} 
                 className={`flex gap-3 p-2 rounded-md ${
-                  notification.isRead ? "opacity-75" : "bg-muted/60"
+                  notification.is_read ? "opacity-75" : "bg-muted/60"
                 }`}
               >
                 <div className={`p-1 rounded-md ${
@@ -80,7 +80,7 @@ export const Notifications = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between">
                     <p className="text-sm font-medium">{notification.title}</p>
-                    {!notification.isRead && (
+                    {!notification.is_read && (
                       <Button 
                         variant="ghost" 
                         size="icon" 

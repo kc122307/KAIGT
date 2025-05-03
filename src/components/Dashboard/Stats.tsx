@@ -7,7 +7,7 @@ export const Stats = () => {
   const { goals, currentUser } = useGoalStore();
   
   // Filter goals for current user
-  const userGoals = goals.filter(goal => goal.userId === currentUser?.id);
+  const userGoals = goals.filter(goal => goal.user_id === currentUser?.id);
   
   // Calculate stats
   const completedGoals = userGoals.filter(goal => goal.status === 'Completed').length;

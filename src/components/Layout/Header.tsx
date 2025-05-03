@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useGoalStore } from "../../store/goalStore";
@@ -32,7 +31,7 @@ export const Header = ({ toggleSidebar }: HeaderProps) => {
   const { isDarkMode, toggleDarkMode } = useTheme();
   const [showSearch, setShowSearch] = useState(false);
   
-  const unreadNotifications = notifications.filter(n => !n.isRead).length;
+  const unreadNotifications = notifications.filter(n => !n.is_read).length;
   
   return (
     <header className="border-b sticky top-0 z-30 bg-background">

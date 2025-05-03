@@ -17,6 +17,7 @@ export const getActivities = async (): Promise<Activity[]> => {
   return data.map(activity => ({
     ...activity,
     timestamp: new Date(activity.timestamp),
+    action_type: activity.action_type as Activity['action_type']
   }));
 };
 
@@ -36,6 +37,7 @@ export const getUserActivities = async (userId: string): Promise<Activity[]> => 
   return data.map(activity => ({
     ...activity,
     timestamp: new Date(activity.timestamp),
+    action_type: activity.action_type as Activity['action_type']
   }));
 };
 
@@ -55,6 +57,7 @@ export const getGoalActivities = async (goalId: string): Promise<Activity[]> => 
   return data.map(activity => ({
     ...activity,
     timestamp: new Date(activity.timestamp),
+    action_type: activity.action_type as Activity['action_type']
   }));
 };
 
@@ -80,6 +83,7 @@ export const getRecentActivities = async (userId: string, limit?: number): Promi
   return data.map(activity => ({
     ...activity,
     timestamp: new Date(activity.timestamp),
+    action_type: activity.action_type as Activity['action_type']
   }));
 };
 
@@ -99,5 +103,6 @@ export const addActivity = async (activityData: Omit<Activity, 'id' | 'timestamp
   return {
     ...data,
     timestamp: new Date(data.timestamp),
+    action_type: data.action_type as Activity['action_type']
   };
 };

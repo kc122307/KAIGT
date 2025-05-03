@@ -1,4 +1,5 @@
 
+
 export type GoalCategory = 'Personal' | 'Work' | 'Health' | 'Education' | 'Finance' | 'Social';
 
 export type GoalStatus = 'Completed' | 'In-Progress' | 'Pending';
@@ -45,3 +46,4 @@ export type Notification = {
   type: 'deadline' | 'inactivity' | 'achievement' | 'collaboration';
   goal_id?: string;
 };
+

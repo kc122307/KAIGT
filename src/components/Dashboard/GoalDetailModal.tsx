@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -105,15 +104,6 @@ export const GoalDetailModal = ({ goalId, onClose }: GoalDetailModalProps) => {
                 )}
               </div>
               
-              {goal.collaborators && goal.collaborators.length > 0 && (
-                <div className="flex items-center gap-1.5 text-sm">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <span>
-                    Collaborating with: {goal.collaborators.map(user => user.name).join(', ')}
-                  </span>
-                </div>
-              )}
-              
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Progress</span>
@@ -171,7 +161,7 @@ export const GoalDetailModal = ({ goalId, onClose }: GoalDetailModalProps) => {
             <DialogFooter className="flex justify-between sm:justify-between">
               <Button variant="outline" onClick={onClose}>Close</Button>
               
-              {goal.isPublic ? (
+              {goal.is_public ? (
                 <Button variant="outline" className="flex items-center gap-2">
                   <Share2 className="h-4 w-4" />
                   Share Goal

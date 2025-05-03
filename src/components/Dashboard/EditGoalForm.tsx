@@ -42,7 +42,7 @@ export const EditGoalForm = ({ goal, onClose }: EditGoalFormProps) => {
       description: goal.description,
       category: goal.category,
       deadline: goal.deadline,
-      isPublic: goal.isPublic
+      isPublic: goal.is_public
     }
   });
   

@@ -2,7 +2,7 @@
 import { Goal } from '../../types';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Calendar, Clock, Users } from 'lucide-react';
+import { Calendar, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -80,13 +80,6 @@ export const GoalCard = ({ goal, onClick }: GoalCardProps) => {
             <div className="flex items-center gap-1">
               <Clock size={14} />
               <span>{daysRemaining} days left</span>
-            </div>
-          )}
-          
-          {goal.collaborators && goal.collaborators.length > 0 && (
-            <div className="flex items-center gap-1">
-              <Users size={14} />
-              <span>{goal.collaborators.length}</span>
             </div>
           )}
         </div>

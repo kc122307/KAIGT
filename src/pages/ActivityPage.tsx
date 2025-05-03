@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useGoalStore } from "../store/goalStore";
 import { format, subDays } from "date-fns";
@@ -78,7 +77,7 @@ const ActivityPage = () => {
   const todayActivities = activities.filter(activity => 
     new Date(activity.timestamp).toDateString() === new Date().toDateString()
   ).length;
-  const completedGoals = activities.filter(activity => activity.actionType === 'completed').length;
+  const completedGoals = activities.filter(activity => activity.action_type === 'completed').length;
   
   return (
     <div className="space-y-6">
@@ -153,16 +152,16 @@ const ActivityPage = () => {
                   {dateActivities.map(activity => (
                     <li key={activity.id} className="p-4 flex items-start gap-3">
                       <div className="mt-1">
-                        {activity.actionType === 'created' && (
+                        {activity.action_type === 'created' && (
                           <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300">+</div>
                         )}
-                        {activity.actionType === 'updated' && (
+                        {activity.action_type === 'updated' && (
                           <div className="h-8 w-8 rounded-full bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center text-yellow-600 dark:text-yellow-300">↻</div>
                         )}
-                        {activity.actionType === 'completed' && (
+                        {activity.action_type === 'completed' && (
                           <div className="h-8 w-8 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center text-green-600 dark:text-green-300">✓</div>
                         )}
-                        {activity.actionType === 'deleted' && (
+                        {activity.action_type === 'deleted' && (
                           <div className="h-8 w-8 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center text-red-600 dark:text-red-300">×</div>
                         )}
                       </div>
@@ -170,14 +169,14 @@ const ActivityPage = () => {
                         <p className="text-sm font-medium">{activity.details}</p>
                         <div className="flex flex-wrap gap-2 mt-1">
                           <Badge variant={
-                            activity.actionType === 'created' ? 'info' : 
-                            activity.actionType === 'updated' ? 'warning' :
-                            activity.actionType === 'completed' ? 'success' : 'destructive'
+                            activity.action_type === 'created' ? 'info' : 
+                            activity.action_type === 'updated' ? 'warning' :
+                            activity.action_type === 'completed' ? 'success' : 'destructive'
                           }>
-                            {activity.actionType}
+                            {activity.action_type}
                           </Badge>
                           <Badge variant="outline">
-                            {getGoalTitle(activity.goalId)}
+                            {getGoalTitle(activity.goal_id)}
                           </Badge>
                           <span className="text-xs text-muted-foreground">
                             {format(new Date(activity.timestamp), "h:mm a")}
