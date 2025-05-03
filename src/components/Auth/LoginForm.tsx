@@ -12,8 +12,8 @@ import { toast } from "@/components/ui/use-toast";
 
 export const LoginForm = () => {
   const { login, register } = useGoalStore();
-  const [email, setEmail] = useState("john@example.com");
-  const [password, setPassword] = useState("password");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [authType, setAuthType] = useState<"login" | "register">("login");
@@ -30,6 +30,7 @@ export const LoginForm = () => {
     
     try {
       if (authType === "login") {
+        console.log('Login attempt with:', email);
         await login(email, password);
         
         // Show success toast
@@ -43,6 +44,7 @@ export const LoginForm = () => {
           throw new Error("Please enter your name");
         }
         
+        console.log('Registration attempt with:', email);
         await register(name, email, password);
         
         // Show success toast
@@ -58,10 +60,12 @@ export const LoginForm = () => {
     } catch (error) {
       console.error(`${authType} failed:`, error);
       
-      // Show error toast
+      // Show detailed error toast
       toast({
         title: `${authType === "login" ? "Login" : "Registration"} failed`,
-        description: error instanceof Error ? error.message : "Please check your credentials and try again.",
+        description: error instanceof Error 
+          ? error.message 
+          : "An unexpected error occurred. Please try again.",
         variant: "destructive",
         duration: 5000,
       });

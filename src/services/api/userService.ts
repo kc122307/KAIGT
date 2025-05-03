@@ -69,6 +69,8 @@ export const getCurrentUser = async (): Promise<User | null> => {
 
 // Login a user
 export const login = async (email: string, password: string): Promise<User> => {
+  console.log('Attempting login with:', email);
+  
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password
@@ -80,8 +82,12 @@ export const login = async (email: string, password: string): Promise<User> => {
   }
   
   if (!data.user) {
-    throw new Error('Login failed');
+    throw new Error('Login failed: No user data returned');
   }
+  
+  // Wait a moment to ensure the profile is available
+  // Sometimes there's a slight delay between auth success and profile availability
+  await new Promise(resolve => setTimeout(resolve, 500));
   
   const profile = await getUserById(data.user.id);
   if (!profile) {
@@ -96,13 +102,16 @@ export const login = async (email: string, password: string): Promise<User> => {
 
 // Register a new user
 export const register = async (name: string, email: string, password: string): Promise<User> => {
+  console.log('Registering user:', email);
+  
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: {
         name,
-      }
+      },
+      emailRedirectTo: window.location.origin
     }
   });
   
@@ -112,16 +121,16 @@ export const register = async (name: string, email: string, password: string): P
   }
   
   if (!data.user) {
-    throw new Error('Registration failed');
+    throw new Error('Registration failed: No user data returned');
   }
   
   // The profile will be created automatically via trigger
   // Wait a moment for the trigger to complete
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  await new Promise(resolve => setTimeout(resolve, 1500));
   
   const profile = await getUserById(data.user.id);
   if (!profile) {
-    throw new Error('User profile not found');
+    throw new Error('User profile not found after registration');
   }
   
   return {
