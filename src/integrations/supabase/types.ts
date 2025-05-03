@@ -9,7 +9,151 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      activities: {
+        Row: {
+          action_type: string
+          details: string
+          goal_id: string
+          id: string
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          details: string
+          goal_id: string
+          id?: string
+          timestamp?: string
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          details?: string
+          goal_id?: string
+          id?: string
+          timestamp?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activities_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goals: {
+        Row: {
+          category: string
+          created_at: string
+          deadline: string
+          description: string | null
+          id: string
+          is_public: boolean
+          progress: number
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          deadline: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          progress?: number
+          status: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          deadline?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          progress?: number
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          goal_id: string | null
+          id: string
+          is_read: boolean
+          message: string
+          timestamp: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          goal_id?: string | null
+          id?: string
+          is_read?: boolean
+          message: string
+          timestamp?: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          goal_id?: string | null
+          id?: string
+          is_read?: boolean
+          message?: string
+          timestamp?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar: string | null
+          completed_goals: number
+          id: string
+          name: string
+          streak_count: number
+          updated_at: string
+        }
+        Insert: {
+          avatar?: string | null
+          completed_goals?: number
+          id: string
+          name: string
+          streak_count?: number
+          updated_at?: string
+        }
+        Update: {
+          avatar?: string | null
+          completed_goals?: number
+          id?: string
+          name?: string
+          streak_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

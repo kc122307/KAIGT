@@ -1,79 +1,103 @@
 
+import { supabase } from '@/integrations/supabase/client';
 import { Activity } from '../../types';
-import { generateId } from '../utils';
-
-// In-memory storage (simulates a database)
-let activities: Activity[] = [
-  {
-    id: '1',
-    userId: '1',
-    goalId: '1',
-    actionType: 'created',
-    timestamp: new Date('2025-05-01T10:30:00'),
-    details: 'Created goal "Complete React Project"',
-  },
-  {
-    id: '2',
-    userId: '1',
-    goalId: '5',
-    actionType: 'completed',
-    timestamp: new Date('2025-04-15T14:20:00'),
-    details: 'Completed goal "Read 12 Books"',
-  },
-  {
-    id: '3',
-    userId: '1',
-    goalId: '3',
-    actionType: 'updated',
-    timestamp: new Date('2025-05-01T16:45:00'),
-    details: 'Updated progress for "Learn Spanish" to 30%',
-  },
-];
-
-// Simulate network delay
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Get all activities
 export const getActivities = async (): Promise<Activity[]> => {
-  await delay(300); // Simulate API call
-  return [...activities];
+  const { data, error } = await supabase
+    .from('activities')
+    .select('*')
+    .order('timestamp', { ascending: false });
+    
+  if (error) {
+    console.error('Error fetching activities:', error);
+    throw error;
+  }
+
+  return data.map(activity => ({
+    ...activity,
+    timestamp: new Date(activity.timestamp),
+  }));
 };
 
 // Get activities for a specific user
 export const getUserActivities = async (userId: string): Promise<Activity[]> => {
-  await delay(300);
-  return activities.filter(activity => activity.userId === userId);
+  const { data, error } = await supabase
+    .from('activities')
+    .select('*')
+    .eq('user_id', userId)
+    .order('timestamp', { ascending: false });
+    
+  if (error) {
+    console.error('Error fetching user activities:', error);
+    throw error;
+  }
+
+  return data.map(activity => ({
+    ...activity,
+    timestamp: new Date(activity.timestamp),
+  }));
 };
 
 // Get activities for a specific goal
 export const getGoalActivities = async (goalId: string): Promise<Activity[]> => {
-  await delay(300);
-  return activities.filter(activity => activity.goalId === goalId);
+  const { data, error } = await supabase
+    .from('activities')
+    .select('*')
+    .eq('goal_id', goalId)
+    .order('timestamp', { ascending: false });
+    
+  if (error) {
+    console.error('Error fetching goal activities:', error);
+    throw error;
+  }
+
+  return data.map(activity => ({
+    ...activity,
+    timestamp: new Date(activity.timestamp),
+  }));
 };
 
 // Get recent activities with optional limit
 export const getRecentActivities = async (userId: string, limit?: number): Promise<Activity[]> => {
-  await delay(300);
+  let query = supabase
+    .from('activities')
+    .select('*')
+    .eq('user_id', userId)
+    .order('timestamp', { ascending: false });
   
-  const userActivities = activities.filter(activity => activity.userId === userId);
-  const sortedActivities = userActivities.sort(
-    (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
-  );
+  if (limit) {
+    query = query.limit(limit);
+  }
   
-  return limit ? sortedActivities.slice(0, limit) : sortedActivities;
+  const { data, error } = await query;
+    
+  if (error) {
+    console.error('Error fetching recent activities:', error);
+    throw error;
+  }
+
+  return data.map(activity => ({
+    ...activity,
+    timestamp: new Date(activity.timestamp),
+  }));
 };
 
 // Add a new activity
 export const addActivity = async (activityData: Omit<Activity, 'id' | 'timestamp'>): Promise<Activity> => {
-  await delay(300);
-  
-  const newActivity: Activity = {
-    id: generateId(),
-    ...activityData,
-    timestamp: new Date()
+  const { data, error } = await supabase
+    .from('activities')
+    .insert(activityData)
+    .select()
+    .single();
+    
+  if (error) {
+    console.error('Error adding activity:', error);
+    throw error;
+  }
+
+  return {
+    ...data,
+    timestamp: new Date(data.timestamp),
   };
-  
-  activities = [...activities, newActivity];
-  
-  return newActivity;
 };

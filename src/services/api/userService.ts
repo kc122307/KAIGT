@@ -1,150 +1,198 @@
 
+import { supabase } from '@/integrations/supabase/client';
 import { User } from '../../types';
-import { generateId } from '../utils';
-
-// In-memory storage (simulates a database)
-let users: User[] = [
-  {
-    id: '1',
-    name: 'John Doe',
-    email: 'john@example.com',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
-    streakCount: 7,
-    completedGoals: 12,
-  },
-  {
-    id: '2',
-    name: 'Jane Smith',
-    email: 'jane@example.com',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jane',
-    streakCount: 5,
-    completedGoals: 8,
-  },
-  {
-    id: '3',
-    name: 'Bob Johnson',
-    email: 'bob@example.com',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bob',
-    streakCount: 10,
-    completedGoals: 15,
-  },
-];
-
-// Current logged in user
-let currentUser: User | null = users[0]; // Default to first user for development
-
-// Simulate network delay
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Get all users
 export const getUsers = async (): Promise<User[]> => {
-  await delay(300); // Simulate API call
-  return [...users];
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*');
+    
+  if (error) {
+    console.error('Error fetching users:', error);
+    throw error;
+  }
+
+  return data.map(profile => ({
+    id: profile.id,
+    name: profile.name,
+    email: '', // Email not stored in profiles for privacy
+    avatar: profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.id}`,
+    streakCount: profile.streak_count,
+    completedGoals: profile.completed_goals,
+  }));
 };
 
 // Get a specific user
 export const getUserById = async (userId: string): Promise<User | undefined> => {
-  await delay(200);
-  return users.find(user => user.id === userId);
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
+    
+  if (error) {
+    if (error.code === 'PGRST116') {
+      // No rows returned
+      return undefined;
+    }
+    console.error('Error fetching user:', error);
+    throw error;
+  }
+
+  return {
+    id: data.id,
+    name: data.name,
+    email: '', // Email not stored in profiles for privacy
+    avatar: data.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.id}`,
+    streakCount: data.streak_count,
+    completedGoals: data.completed_goals,
+  };
 };
 
 // Get current authenticated user
-export const getCurrentUser = (): User | null => {
-  return currentUser;
+export const getCurrentUser = async (): Promise<User | null> => {
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  if (!session) {
+    return null;
+  }
+  
+  try {
+    const user = await getUserById(session.user.id);
+    return user || null;
+  } catch (error) {
+    console.error('Error getting current user:', error);
+    return null;
+  }
 };
 
 // Login a user
 export const login = async (email: string, password: string): Promise<User> => {
-  await delay(800); // Longer delay to simulate authentication
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
   
-  const user = users.find(user => user.email === email);
-  if (!user) {
-    throw new Error("Invalid email or password");
+  if (error) {
+    console.error('Login error:', error);
+    throw error;
   }
   
-  // In a real app, we would validate the password here
+  if (!data.user) {
+    throw new Error('Login failed');
+  }
   
-  currentUser = user;
-  return user;
+  const profile = await getUserById(data.user.id);
+  if (!profile) {
+    throw new Error('User profile not found');
+  }
+  
+  return {
+    ...profile,
+    email: data.user.email || '',
+  };
 };
 
 // Register a new user
 export const register = async (name: string, email: string, password: string): Promise<User> => {
-  await delay(1000);
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        name,
+      }
+    }
+  });
   
-  // Check if email already exists
-  if (users.some(user => user.email === email)) {
-    throw new Error("Email already registered");
+  if (error) {
+    console.error('Registration error:', error);
+    throw error;
   }
   
-  const newUser: User = {
-    id: generateId(),
-    name,
-    email,
-    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`,
-    streakCount: 0,
-    completedGoals: 0,
+  if (!data.user) {
+    throw new Error('Registration failed');
+  }
+  
+  // The profile will be created automatically via trigger
+  // Wait a moment for the trigger to complete
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  const profile = await getUserById(data.user.id);
+  if (!profile) {
+    throw new Error('User profile not found');
+  }
+  
+  return {
+    ...profile,
+    email: data.user.email || '',
   };
-  
-  users = [...users, newUser];
-  currentUser = newUser;
-  
-  return newUser;
 };
 
 // Logout current user
 export const logout = async (): Promise<void> => {
-  await delay(300);
-  currentUser = null;
+  const { error } = await supabase.auth.signOut();
+  
+  if (error) {
+    console.error('Logout error:', error);
+    throw error;
+  }
 };
 
 // Update user streak count
 export const updateUserStreakCount = async (userId: string, streakCount: number): Promise<User> => {
-  await delay(300);
-  
-  const userIndex = users.findIndex(user => user.id === userId);
-  if (userIndex === -1) {
-    throw new Error("User not found");
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ streak_count: streakCount })
+    .eq('id', userId)
+    .select()
+    .single();
+    
+  if (error) {
+    console.error('Error updating user streak count:', error);
+    throw error;
   }
-  
-  const updatedUser = { ...users[userIndex], streakCount };
-  
-  users = [
-    ...users.slice(0, userIndex),
-    updatedUser,
-    ...users.slice(userIndex + 1)
-  ];
-  
-  if (currentUser && currentUser.id === userId) {
-    currentUser = updatedUser;
-  }
-  
-  return updatedUser;
+
+  return {
+    id: data.id,
+    name: data.name,
+    email: '', // Email not stored in profiles for privacy
+    avatar: data.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.id}`,
+    streakCount: data.streak_count,
+    completedGoals: data.completed_goals,
+  };
 };
 
 // Increment completed goals count
 export const incrementCompletedGoals = async (userId: string): Promise<User> => {
-  await delay(300);
+  // First get current count
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('completed_goals')
+    .eq('id', userId)
+    .single();
+    
+  const newCount = (profile?.completed_goals || 0) + 1;
   
-  const userIndex = users.findIndex(user => user.id === userId);
-  if (userIndex === -1) {
-    throw new Error("User not found");
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ completed_goals: newCount })
+    .eq('id', userId)
+    .select()
+    .single();
+    
+  if (error) {
+    console.error('Error incrementing completed goals:', error);
+    throw error;
   }
-  
-  const updatedUser = { 
-    ...users[userIndex], 
-    completedGoals: users[userIndex].completedGoals + 1 
+
+  return {
+    id: data.id,
+    name: data.name,
+    email: '', // Email not stored in profiles for privacy
+    avatar: data.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.id}`,
+    streakCount: data.streak_count,
+    completedGoals: data.completed_goals,
   };
-  
-  users = [
-    ...users.slice(0, userIndex),
-    updatedUser,
-    ...users.slice(userIndex + 1)
-  ];
-  
-  if (currentUser && currentUser.id === userId) {
-    currentUser = updatedUser;
-  }
-  
-  return updatedUser;
 };

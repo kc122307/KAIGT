@@ -15,7 +15,8 @@ import {
   getCurrentUser,
   getUsers,
   login as apiLogin,
-  logout as apiLogout
+  logout as apiLogout,
+  register as apiRegister
 } from '../services/api/userService';
 import {
   getActivities,
@@ -26,6 +27,7 @@ import {
   markNotificationAsRead as apiMarkNotificationAsRead,
   markAllNotificationsAsRead
 } from '../services/api/notificationService';
+import { supabase } from '@/integrations/supabase/client';
 
 interface GoalState {
   // User state
@@ -48,9 +50,10 @@ interface GoalState {
   // Actions
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<void>;
   toggleDarkMode: () => void;
   
-  addGoal: (goal: Omit<Goal, 'id' | 'createdAt' | 'updatedAt' | 'userId'>) => Promise<void>;
+  addGoal: (goal: Omit<Goal, 'id' | 'created_at' | 'updated_at' | 'user_id'>) => Promise<void>;
   updateGoal: (id: string, goal: Partial<Goal>) => Promise<void>;
   deleteGoal: (id: string) => Promise<void>;
   updateGoalStatus: (id: string, status: GoalStatus) => Promise<void>;
@@ -69,9 +72,9 @@ interface GoalState {
 
 export const useGoalStore = create<GoalState>((set, get) => ({
   // Initial state
-  currentUser: getCurrentUser(),
+  currentUser: null,
   users: [],
-  isAuthenticated: !!getCurrentUser(),
+  isAuthenticated: false,
   isDarkMode: false,
   
   goals: [],
@@ -83,22 +86,25 @@ export const useGoalStore = create<GoalState>((set, get) => ({
   filterCategory: 'All',
   filterStatus: 'All',
   
-  // Fetch user data on initialization
+  // Fetch user data
   fetchUserData: async () => {
     set({ isLoading: true });
     
     try {
-      const currentUser = getCurrentUser();
+      // Check if the user is authenticated
+      const user = await getCurrentUser();
       
-      if (currentUser) {
+      if (user) {
+        // User is authenticated, fetch all data
         const [users, goals, activities, notifications] = await Promise.all([
           getUsers(),
-          getUserGoals(currentUser.id),
-          getActivities(),
-          getUserNotifications(currentUser.id)
+          getUserGoals(user.id),
+          getRecentActivities(user.id, 20),
+          getUserNotifications(user.id)
         ]);
         
         set({
+          currentUser: user,
           users,
           goals,
           activities,
@@ -106,9 +112,11 @@ export const useGoalStore = create<GoalState>((set, get) => ({
           isAuthenticated: true
         });
       } else {
+        // No authenticated user, just fetch users (for leaderboard etc.)
         const users = await getUsers();
         
         set({
+          currentUser: null,
           users,
           goals: [],
           activities: [],
@@ -123,7 +131,7 @@ export const useGoalStore = create<GoalState>((set, get) => ({
     }
   },
   
-  // User actions
+  // Authentication actions
   login: async (email, password) => {
     set({ isLoading: true });
     
@@ -133,7 +141,7 @@ export const useGoalStore = create<GoalState>((set, get) => ({
       // Fetch user data after login
       const [goals, activities, notifications] = await Promise.all([
         getUserGoals(user.id),
-        getRecentActivities(user.id),
+        getRecentActivities(user.id, 20),
         getUserNotifications(user.id)
       ]);
       
@@ -149,6 +157,28 @@ export const useGoalStore = create<GoalState>((set, get) => ({
     } catch (error) {
       set({ isLoading: false });
       console.error("Login failed:", error);
+      throw error;
+    }
+  },
+  
+  register: async (name, email, password) => {
+    set({ isLoading: true });
+    
+    try {
+      const user = await apiRegister(name, email, password);
+      
+      set({
+        currentUser: user,
+        goals: [],
+        activities: [],
+        notifications: [],
+        isAuthenticated: true,
+        isLoading: false
+      });
+      
+    } catch (error) {
+      set({ isLoading: false });
+      console.error("Registration failed:", error);
       throw error;
     }
   },
@@ -194,7 +224,7 @@ export const useGoalStore = create<GoalState>((set, get) => ({
       // Refresh activities after adding a goal
       const currentUser = get().currentUser;
       if (currentUser) {
-        const activities = await getActivities();
+        const activities = await getRecentActivities(currentUser.id, 20);
         set({ activities });
       }
       
@@ -216,7 +246,7 @@ export const useGoalStore = create<GoalState>((set, get) => ({
       if (currentUser) {
         const [goals, activities] = await Promise.all([
           getUserGoals(currentUser.id),
-          getActivities()
+          getRecentActivities(currentUser.id, 20)
         ]);
         
         set({
@@ -248,7 +278,7 @@ export const useGoalStore = create<GoalState>((set, get) => ({
       // Refresh activities after deleting a goal
       const currentUser = get().currentUser;
       if (currentUser) {
-        const activities = await getActivities();
+        const activities = await getRecentActivities(currentUser.id, 20);
         set({ activities });
       }
       
@@ -270,7 +300,7 @@ export const useGoalStore = create<GoalState>((set, get) => ({
       if (currentUser) {
         const [goals, activities, notifications] = await Promise.all([
           getUserGoals(currentUser.id),
-          getActivities(),
+          getRecentActivities(currentUser.id, 20),
           getUserNotifications(currentUser.id)
         ]);
         
@@ -300,7 +330,7 @@ export const useGoalStore = create<GoalState>((set, get) => ({
       if (currentUser) {
         const [goals, activities] = await Promise.all([
           getUserGoals(currentUser.id),
-          getActivities()
+          getRecentActivities(currentUser.id, 20)
         ]);
         
         set({
@@ -324,7 +354,7 @@ export const useGoalStore = create<GoalState>((set, get) => ({
       
       set(state => ({
         notifications: state.notifications.map(notification =>
-          notification.id === id ? { ...notification, isRead: true } : notification
+          notification.id === id ? { ...notification, is_read: true } : notification
         )
       }));
       
@@ -343,7 +373,7 @@ export const useGoalStore = create<GoalState>((set, get) => ({
       await markAllNotificationsAsRead(currentUser.id);
       
       set(state => ({
-        notifications: state.notifications.map(notification => ({ ...notification, isRead: true }))
+        notifications: state.notifications.map(notification => ({ ...notification, is_read: true }))
       }));
       
     } catch (error) {
@@ -365,6 +395,21 @@ export const useGoalStore = create<GoalState>((set, get) => ({
     set({ selectedGoalId: id });
   }
 }));
+
+// Setup real-time listeners
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN' && session) {
+    useGoalStore.getState().fetchUserData();
+  } else if (event === 'SIGNED_OUT') {
+    useGoalStore.setState({
+      currentUser: null,
+      goals: [],
+      activities: [],
+      notifications: [],
+      isAuthenticated: false
+    });
+  }
+});
 
 // Initialize data on import
 useGoalStore.getState().fetchUserData();
