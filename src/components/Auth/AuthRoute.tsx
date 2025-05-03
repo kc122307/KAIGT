@@ -8,8 +8,15 @@ interface AuthRouteProps {
 }
 
 export const AuthRoute = ({ children }: AuthRouteProps) => {
-  const { isAuthenticated, currentUser } = useGoalStore();
+  const { isAuthenticated, currentUser, fetchUserData } = useGoalStore();
   const location = useLocation();
+
+  useEffect(() => {
+    // Ensure user data is loaded if authenticated
+    if (isAuthenticated && !currentUser) {
+      fetchUserData().catch(console.error);
+    }
+  }, [isAuthenticated, currentUser, fetchUserData]);
 
   // Check if user is authenticated
   if (!isAuthenticated || !currentUser) {

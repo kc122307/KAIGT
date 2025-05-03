@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail, Lock, Github, Facebook } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { toast } from "@/components/ui/use-toast";
 
 export const LoginForm = () => {
   const { login } = useGoalStore();
@@ -15,14 +17,38 @@ export const LoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [authType, setAuthType] = useState<"login" | "register">("login");
   
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get the redirect path from location state or default to '/'
+  const from = (location.state as any)?.from?.pathname || '/';
+  
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
     setIsLoading(true);
     
     try {
       await login(email, password);
+      
+      // Show success toast
+      toast({
+        title: "Login successful!",
+        description: "Welcome back to GoalTracker.",
+        duration: 3000,
+      });
+      
+      // Navigate to the previous page or home
+      navigate(from, { replace: true });
     } catch (error) {
       console.error("Login failed:", error);
+      
+      // Show error toast
+      toast({
+        title: "Login failed",
+        description: "Invalid email or password. Please try again.",
+        variant: "destructive",
+        duration: 5000,
+      });
     } finally {
       setIsLoading(false);
     }

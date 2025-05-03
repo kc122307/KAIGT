@@ -1,4 +1,5 @@
 
+import { useEffect, useState } from 'react';
 import { useGoalStore } from '../../store/goalStore';
 import { GoalCategory, GoalStatus } from '../../types';
 import { GoalList } from './GoalList';
@@ -8,20 +9,45 @@ import { Leaderboard } from '../Leaderboard/Leaderboard';
 import { Notifications } from '../Notifications/Notifications';
 import { Stats } from './Stats';
 import { PlusIcon } from 'lucide-react';
-import { useState } from 'react';
 import { AddGoalModal } from './AddGoalModal';
+import { getFilteredGoals } from '../../services/api/goalService';
 
 export const Dashboard = () => {
   const { filterCategory, filterStatus, setFilterCategory, setFilterStatus, goals, currentUser } = useGoalStore();
   const [showAddModal, setShowAddModal] = useState(false);
+  const [filteredGoals, setFilteredGoals] = useState(goals);
+  const [isLoading, setIsLoading] = useState(false);
   
-  // Filter goals based on selected filters and user
-  const filteredGoals = goals.filter(goal => {
-    if (goal.userId !== currentUser?.id) return false;
-    if (filterCategory !== 'All' && goal.category !== filterCategory) return false;
-    if (filterStatus !== 'All' && goal.status !== filterStatus) return false;
-    return true;
-  });
+  // Fetch filtered goals when filters change
+  useEffect(() => {
+    const fetchFilteredGoals = async () => {
+      if (!currentUser) return;
+      
+      setIsLoading(true);
+      try {
+        const filtered = await getFilteredGoals(
+          currentUser.id,
+          filterCategory,
+          filterStatus
+        );
+        setFilteredGoals(filtered);
+      } catch (error) {
+        console.error('Error fetching filtered goals:', error);
+        // Fallback to client-side filtering if API fails
+        const filtered = goals.filter(goal => {
+          if (goal.userId !== currentUser?.id) return false;
+          if (filterCategory !== 'All' && goal.category !== filterCategory) return false;
+          if (filterStatus !== 'All' && goal.status !== filterStatus) return false;
+          return true;
+        });
+        setFilteredGoals(filtered);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchFilteredGoals();
+  }, [goals, currentUser, filterCategory, filterStatus]);
   
   return (
     <div className="container mx-auto px-4 py-8">
@@ -48,7 +74,7 @@ export const Dashboard = () => {
             onStatusChange={setFilterStatus}
           />
           
-          <GoalList goals={filteredGoals} />
+          <GoalList goals={filteredGoals} isLoading={isLoading} />
           
           <div className="mt-8">
             <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
