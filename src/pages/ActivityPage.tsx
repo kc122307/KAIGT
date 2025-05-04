@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useGoalStore } from "../store/goalStore";
 import { format, subDays } from "date-fns";
@@ -72,12 +73,19 @@ const ActivityPage = () => {
     return goals.find(goal => goal.id === goalId)?.title || "Unknown Goal";
   };
   
-  // Calculate activity stats
+  // Calculate activity stats - FIX: count unique completed goals
   const totalActivities = activities.length;
   const todayActivities = activities.filter(activity => 
     new Date(activity.timestamp).toDateString() === new Date().toDateString()
   ).length;
-  const completedGoals = activities.filter(activity => activity.action_type === 'completed').length;
+  
+  // Fix for completed goals count - count unique goal IDs that have been completed
+  const uniqueCompletedGoalIds = new Set(
+    activities
+      .filter(activity => activity.action_type === 'completed')
+      .map(activity => activity.goal_id)
+  );
+  const completedGoals = uniqueCompletedGoalIds.size;
   
   return (
     <div className="space-y-6">

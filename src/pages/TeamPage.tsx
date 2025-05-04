@@ -1,12 +1,39 @@
 
+import { useEffect, useState } from "react";
 import { useGoalStore } from "../store/goalStore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Users } from "lucide-react";
+import { getUsers } from "../services/api/userService";
+import { User } from "../types";
 
 const TeamPage = () => {
-  const { users } = useGoalStore();
+  const { users: storeUsers } = useGoalStore();
+  const [refreshedUsers, setRefreshedUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Fetch fresh user data to ensure we have updated streak counts and completed goals
+  useEffect(() => {
+    const fetchLatestUserData = async () => {
+      setIsLoading(true);
+      try {
+        const latestUsers = await getUsers();
+        setRefreshedUsers(latestUsers);
+      } catch (error) {
+        console.error("Error fetching latest user data:", error);
+        // Fallback to store data if API fails
+        setRefreshedUsers(storeUsers);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchLatestUserData();
+  }, [storeUsers]);
+  
+  // Use refreshed data, fallback to store data
+  const users = refreshedUsers.length > 0 ? refreshedUsers : storeUsers;
   
   return (
     <div className="space-y-6">
@@ -22,44 +49,54 @@ const TeamPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-2">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Member</TableHead>
-                <TableHead>Completed Goals</TableHead>
-                <TableHead>Current Streak</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full overflow-hidden">
-                        <img 
-                          src={user.avatar} 
-                          alt={user.name} 
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <div>
-                        <p className="font-medium">{user.name}</p>
-                        <p className="text-xs text-muted-foreground">{user.email}</p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{user.completedGoals}</TableCell>
-                  <TableCell>{user.streakCount} days</TableCell>
-                  <TableCell>
-                    <Badge variant={user.streakCount > 0 ? "success" : "secondary"}>
-                      {user.streakCount > 0 ? "Active" : "Inactive"}
-                    </Badge>
-                  </TableCell>
+          {isLoading ? (
+            <div className="py-8 text-center">
+              <div className="animate-pulse">Loading team data...</div>
+            </div>
+          ) : users.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground">
+              No team members found
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Member</TableHead>
+                  <TableHead>Completed Goals</TableHead>
+                  <TableHead>Current Streak</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {users.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full overflow-hidden">
+                          <img 
+                            src={user.avatar} 
+                            alt={user.name} 
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                        <div>
+                          <p className="font-medium">{user.name}</p>
+                          <p className="text-xs text-muted-foreground">{user.email}</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{user.completedGoals}</TableCell>
+                    <TableCell>{user.streakCount} days</TableCell>
+                    <TableCell>
+                      <Badge variant={user.streakCount > 0 ? "success" : "secondary"}>
+                        {user.streakCount > 0 ? "Active" : "Inactive"}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
