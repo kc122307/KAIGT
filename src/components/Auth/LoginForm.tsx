@@ -31,36 +31,36 @@ export const LoginForm = () => {
             <TabsTrigger value="login">Login</TabsTrigger>
             <TabsTrigger value="register">Register</TabsTrigger>
           </TabsList>
+          
+          <form onSubmit={currentAuth.handleSubmit}>
+            <CardContent className="space-y-4 mt-4">
+              <TabsContent value="login" className="space-y-4">
+                <LoginFormFields 
+                  email={loginAuth.email}
+                  setEmail={loginAuth.setEmail}
+                  password={loginAuth.password}
+                  setPassword={loginAuth.setPassword}
+                  isLoading={loginAuth.isLoading}
+                />
+              </TabsContent>
+              
+              <TabsContent value="register" className="space-y-4">
+                <RegisterFormFields 
+                  name={registerAuth.name}
+                  setName={registerAuth.setName}
+                  email={registerAuth.email}
+                  setEmail={registerAuth.setEmail}
+                  password={registerAuth.password}
+                  setPassword={registerAuth.setPassword}
+                  isLoading={registerAuth.isLoading}
+                />
+              </TabsContent>
+              
+              <SocialLogin />
+            </CardContent>
+          </form>
         </Tabs>
       </CardHeader>
-      
-      <form onSubmit={currentAuth.handleSubmit}>
-        <CardContent className="space-y-4">
-          <TabsContent value="login" className="space-y-4">
-            <LoginFormFields 
-              email={loginAuth.email}
-              setEmail={loginAuth.setEmail}
-              password={loginAuth.password}
-              setPassword={loginAuth.setPassword}
-              isLoading={loginAuth.isLoading}
-            />
-          </TabsContent>
-          
-          <TabsContent value="register" className="space-y-4">
-            <RegisterFormFields 
-              name={registerAuth.name}
-              setName={registerAuth.setName}
-              email={registerAuth.email}
-              setEmail={registerAuth.setEmail}
-              password={registerAuth.password}
-              setPassword={registerAuth.setPassword}
-              isLoading={registerAuth.isLoading}
-            />
-          </TabsContent>
-          
-          <SocialLogin />
-        </CardContent>
-      </form>
     </AuthContainer>
   );
 };
