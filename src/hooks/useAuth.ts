@@ -46,7 +46,7 @@ export const useAuth = (authType: AuthType) => {
         // Show success toast with additional information about email verification
         toast({
           title: "Registration successful!",
-          description: "Welcome to GoalTracker! Your account has been created. You may need to verify your email before logging in.",
+          description: "Welcome to GoalTracker! Please check your email and verify your account before logging in.",
           duration: 5000,
         });
       }
@@ -65,6 +65,8 @@ export const useAuth = (authType: AuthType) => {
         errorMessage = "Please check your email and confirm your account before logging in.";
       } else if (errorMessage.includes("Invalid login credentials")) {
         errorMessage = "Invalid email or password. If you just registered, you may need to verify your email first.";
+      } else if (errorMessage.includes("User already exists")) {
+        errorMessage = "We've sent a new verification email. Please check your inbox and spam folder.";
       }
       
       // Show detailed error toast

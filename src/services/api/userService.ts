@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '../../types';
 
@@ -104,6 +103,32 @@ export const login = async (email: string, password: string): Promise<User> => {
 export const register = async (name: string, email: string, password: string): Promise<User> => {
   console.log('Registering user:', email);
   
+  // First check if this user already exists but just needs to verify email
+  try {
+    const { data: existingUser } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+    
+    if (existingUser && existingUser.user) {
+      // User exists but probably needs email verification
+      // Let's try to resend the verification email
+      await supabase.auth.resend({
+        type: 'signup',
+        email,
+      });
+      
+      throw new Error('User already exists. Please verify your email to continue.');
+    }
+  } catch (err) {
+    // If login failed due to invalid credentials, proceed with registration
+    // Otherwise rethrow the "user exists" error
+    if (!(err instanceof Error) || !err.message.includes('Invalid login credentials')) {
+      throw err;
+    }
+  }
+  
+  // Proceed with registration
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -111,7 +136,7 @@ export const register = async (name: string, email: string, password: string): P
       data: {
         name,
       },
-      emailRedirectTo: window.location.origin
+      emailRedirectTo: `${window.location.origin}/login`
     }
   });
   
@@ -124,19 +149,56 @@ export const register = async (name: string, email: string, password: string): P
     throw new Error('Registration failed: No user data returned');
   }
   
-  // The profile will be created automatically via trigger
-  // Wait a moment for the trigger to complete
-  await new Promise(resolve => setTimeout(resolve, 1500));
+  console.log('User registered successfully, checking for profile creation...');
   
-  const profile = await getUserById(data.user.id);
-  if (!profile) {
+  // Wait longer for the profile to be created by database trigger
+  // The handle_new_user function needs time to run
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  
+  // Check if the profile was created
+  try {
+    const profile = await getUserById(data.user.id);
+    if (!profile) {
+      console.error('Profile not created after registration. Creating manually...');
+      
+      // Create the profile manually if the trigger didn't work
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .insert([
+          { 
+            id: data.user.id, 
+            name: name,
+            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.user.id}`,
+            streak_count: 0,
+            completed_goals: 0
+          }
+        ])
+        .select()
+        .single();
+      
+      if (profileError) {
+        console.error('Error creating profile manually:', profileError);
+        throw new Error('Failed to create user profile');
+      }
+      
+      return {
+        id: profileData.id,
+        name: profileData.name,
+        email: data.user.email || '',
+        avatar: profileData.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profileData.id}`,
+        streakCount: profileData.streak_count,
+        completedGoals: profileData.completed_goals,
+      };
+    }
+    
+    return {
+      ...profile,
+      email: data.user.email || '',
+    };
+  } catch (error) {
+    console.error('Error checking/creating profile:', error);
     throw new Error('User profile not found after registration');
   }
-  
-  return {
-    ...profile,
-    email: data.user.email || '',
-  };
 };
 
 // Logout current user

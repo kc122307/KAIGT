@@ -37,23 +37,39 @@ export const LoginFormFields = ({
     setResendingEmail(true);
     
     try {
+      // Try to resend the verification email
       const { error } = await supabase.auth.resend({
         type: 'signup',
         email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/login`
+        }
       });
       
       if (error) throw error;
       
       toast({
         title: "Verification email sent",
-        description: "Please check your inbox and click the verification link",
+        description: "Please check your inbox (and spam folder) and click the verification link. This may take a few minutes to arrive.",
+        duration: 8000,
       });
     } catch (error) {
       console.error("Error resending verification email:", error);
+      
+      let errorMessage = error instanceof Error 
+        ? error.message 
+        : "An unexpected error occurred";
+        
+      // If the error is about the user not being found, give a helpful message
+      if (errorMessage.includes("User not found")) {
+        errorMessage = "No account found with this email. Please register first.";
+      }
+      
       toast({
         title: "Failed to resend verification email",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        description: errorMessage,
         variant: "destructive",
+        duration: 6000,
       });
     } finally {
       setResendingEmail(false);
