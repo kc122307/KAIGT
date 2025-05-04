@@ -35,6 +35,9 @@ export const useAuth = (authType: AuthType) => {
           description: "Welcome back to GoalTracker.",
           duration: 3000,
         });
+        
+        // Navigate to the previous page or home
+        navigate(from, { replace: true });
       } else {
         if (!name.trim()) {
           throw new Error("Please enter your name");
@@ -46,13 +49,13 @@ export const useAuth = (authType: AuthType) => {
         // Show success toast with additional information about email verification
         toast({
           title: "Registration successful!",
-          description: "Welcome to GoalTracker! Please check your email and verify your account before logging in.",
+          description: "Welcome to GoalTracker! You can now login with your credentials.",
           duration: 5000,
         });
+        
+        // For registration, navigate to the login page
+        navigate('/login', { replace: true });
       }
-      
-      // Navigate to the previous page or home
-      navigate(from, { replace: true });
     } catch (error) {
       console.error(`${authType} failed:`, error);
       
@@ -64,9 +67,11 @@ export const useAuth = (authType: AuthType) => {
       if (errorMessage.includes("Email not confirmed")) {
         errorMessage = "Please check your email and confirm your account before logging in.";
       } else if (errorMessage.includes("Invalid login credentials")) {
-        errorMessage = "Invalid email or password. If you just registered, you may need to verify your email first.";
+        errorMessage = "Invalid email or password.";
       } else if (errorMessage.includes("User already exists")) {
-        errorMessage = "We've sent a new verification email. Please check your inbox and spam folder.";
+        errorMessage = "This email is already registered. Try logging in instead.";
+      } else if (errorMessage.includes("User profile not found")) {
+        errorMessage = "Registration failed. Please try again later.";
       }
       
       // Show detailed error toast

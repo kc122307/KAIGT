@@ -1,101 +1,105 @@
 
-import { cn } from "@/lib/utils";
 import { Link, useLocation } from "react-router-dom";
-import {
-  LayoutDashboard,
-  Target,
-  ListChecks,
-  BarChart,
-  Users,
-  Settings,
-  Trophy,
+import { useGoalStore } from "../../store/goalStore";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { 
+  Home, 
+  CheckSquare, 
+  ListTodo, 
+  LineChart, 
+  User, 
+  Settings, 
+  LogOut,
   Bell,
-  History,
+  Activity,
+  Trophy,
+  Users
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface SidebarProps {
   open: boolean;
 }
 
-const menuItems = [
-  {
-    title: "Dashboard",
-    icon: LayoutDashboard,
-    path: "/",
-  },
-  {
-    title: "Goals",
-    icon: Target,
-    path: "/goals",
-  },
-  {
-    title: "Tasks",
-    icon: ListChecks,
-    path: "/tasks",
-  },
-  {
-    title: "Progress",
-    icon: BarChart,
-    path: "/progress",
-  },
-  {
-    title: "Activity",
-    icon: History,
-    path: "/activity",
-  },
-  {
-    title: "Teams",
-    icon: Users,
-    path: "/teams",
-  },
-  {
-    title: "Leaderboard",
-    icon: Trophy,
-    path: "/leaderboard",
-  },
-  {
-    title: "Notifications",
-    icon: Bell,
-    path: "/notifications",
-  },
-  {
-    title: "Settings",
-    icon: Settings,
-    path: "/settings",
-  },
-];
-
 export const Sidebar = ({ open }: SidebarProps) => {
+  const { logout, currentUser } = useGoalStore();
   const location = useLocation();
   
+  const navItems = [
+    { title: 'Dashboard', icon: <Home className="h-5 w-5" />, path: '/' },
+    { title: 'Goals', icon: <CheckSquare className="h-5 w-5" />, path: '/goals' },
+    { title: 'Tasks', icon: <ListTodo className="h-5 w-5" />, path: '/tasks' },
+    { title: 'Progress', icon: <LineChart className="h-5 w-5" />, path: '/progress' },
+    { title: 'Activity', icon: <Activity className="h-5 w-5" />, path: '/activity' },
+    { title: 'Notifications', icon: <Bell className="h-5 w-5" />, path: '/notifications' },
+    { title: 'Leaderboard', icon: <Trophy className="h-5 w-5" />, path: '/leaderboard' },
+    { title: 'Team', icon: <Users className="h-5 w-5" />, path: '/team' },
+  ];
+  
+  const handleLogout = () => {
+    logout().catch(console.error);
+  };
+  
   return (
-    <div className="h-full flex flex-col bg-background border-r">
-      <div className="flex h-16 items-center border-b px-6">
-        <Link to="/" className="flex items-center gap-2">
-          <span className="font-bold text-xl">GoalTracker</span>
-        </Link>
+    <div className="flex flex-col h-full bg-background border-r p-4">
+      {/* Profile section */}
+      {currentUser && (
+        <div className="flex items-center gap-3 mb-6 pb-4 border-b">
+          <div className="h-10 w-10 rounded-full overflow-hidden bg-muted">
+            <img 
+              src={currentUser.avatar} 
+              alt={currentUser.name}
+              className="h-full w-full object-cover"
+            />
+          </div>
+          <div>
+            <div className="font-medium">{currentUser.name}</div>
+            <div className="text-xs text-muted-foreground">
+              {currentUser.completedGoals} goals completed
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Navigation */}
+      <div className="space-y-1 flex-1">
+        {navItems.map(item => (
+          <Link key={item.path} to={item.path}>
+            <Button
+              variant={location.pathname === item.path ? "secondary" : "ghost"}
+              className={cn("w-full justify-start", { 
+                'bg-secondary': location.pathname === item.path 
+              })}
+            >
+              {item.icon}
+              <span className="ml-2">{item.title}</span>
+            </Button>
+          </Link>
+        ))}
       </div>
       
-      <div className="flex-1 overflow-auto py-4">
-        <nav className="grid items-start px-2 text-sm">
-          {menuItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            
-            return (
-              <Link
-                key={item.title}
-                to={item.path}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-foreground",
-                  isActive ? "bg-primary/10 text-primary font-medium" : ""
-                )}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.title}
-              </Link>
-            );
-          })}
-        </nav>
+      <Separator className="my-4" />
+      
+      {/* Settings and Logout */}
+      <div className="space-y-1">
+        <Link to="/settings">
+          <Button
+            variant={location.pathname === '/settings' ? "secondary" : "ghost"}
+            className="w-full justify-start"
+          >
+            <Settings className="h-5 w-5 mr-2" />
+            Settings
+          </Button>
+        </Link>
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+          onClick={handleLogout}
+        >
+          <LogOut className="h-5 w-5 mr-2" />
+          Logout
+        </Button>
       </div>
     </div>
   );
