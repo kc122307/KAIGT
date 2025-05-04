@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useGoalStore } from "../store/goalStore";
 import { toast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 type AuthType = "login" | "register";
 
@@ -42,11 +43,11 @@ export const useAuth = (authType: AuthType) => {
         console.log('Registration attempt with:', email);
         await register(name, email, password);
         
-        // Show success toast
+        // Show success toast with additional information about email verification
         toast({
           title: "Registration successful!",
-          description: "Welcome to GoalTracker! Your account has been created.",
-          duration: 3000,
+          description: "Welcome to GoalTracker! Your account has been created. You may need to verify your email before logging in.",
+          duration: 5000,
         });
       }
       
@@ -55,12 +56,21 @@ export const useAuth = (authType: AuthType) => {
     } catch (error) {
       console.error(`${authType} failed:`, error);
       
+      let errorMessage = error instanceof Error 
+        ? error.message 
+        : "An unexpected error occurred. Please try again.";
+      
+      // Add more helpful messages for common Supabase auth errors
+      if (errorMessage.includes("Email not confirmed")) {
+        errorMessage = "Please check your email and confirm your account before logging in.";
+      } else if (errorMessage.includes("Invalid login credentials")) {
+        errorMessage = "Invalid email or password. If you just registered, you may need to verify your email first.";
+      }
+      
       // Show detailed error toast
       toast({
         title: `${authType === "login" ? "Login" : "Registration"} failed`,
-        description: error instanceof Error 
-          ? error.message 
-          : "An unexpected error occurred. Please try again.",
+        description: errorMessage,
         variant: "destructive",
         duration: 5000,
       });
