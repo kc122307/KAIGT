@@ -1,55 +1,129 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '../../types';
 
 // Get all users
 export const getUsers = async (): Promise<User[]> => {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*');
+  try {
+    // First, get all profiles
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('*');
+      
+    if (profilesError) {
+      console.error('Error fetching profiles:', profilesError);
+      throw profilesError;
+    }
     
-  if (error) {
-    console.error('Error fetching users:', error);
+    // Then, get the completed goals count for each user
+    const usersWithData = await Promise.all(profiles.map(async (profile) => {
+      // Count completed goals for this user
+      const { count: completedGoalsCount, error: goalsError } = await supabase
+        .from('goals')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', profile.id)
+        .eq('status', 'Completed');
+        
+      if (goalsError) {
+        console.error('Error counting completed goals:', goalsError);
+        return {
+          id: profile.id,
+          name: profile.name,
+          email: '',
+          avatar: profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.id}`,
+          streakCount: profile.streak_count || 0,
+          completedGoals: profile.completed_goals || 0,
+        };
+      }
+      
+      // If the count is different from what's stored in the profile,
+      // update the profile with the correct count
+      const actualCompletedGoals = completedGoalsCount || 0;
+      if (actualCompletedGoals !== profile.completed_goals) {
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ completed_goals: actualCompletedGoals })
+          .eq('id', profile.id);
+          
+        if (updateError) {
+          console.error('Error updating completed_goals count:', updateError);
+        }
+      }
+      
+      return {
+        id: profile.id,
+        name: profile.name,
+        email: '',
+        avatar: profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.id}`,
+        streakCount: profile.streak_count || 0,
+        completedGoals: actualCompletedGoals,
+      };
+    }));
+
+    console.log('Users with accurate completion data:', usersWithData);
+    return usersWithData;
+  } catch (error) {
+    console.error('Error in getUsers:', error);
     throw error;
   }
-
-  console.log('Raw profiles data from DB:', data);
-
-  return data.map(profile => ({
-    id: profile.id,
-    name: profile.name,
-    email: '', // Email not stored in profiles for privacy
-    avatar: profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.id}`,
-    streakCount: profile.streak_count || 0,
-    completedGoals: profile.completed_goals || 0,
-  }));
 };
 
 // Get a specific user
 export const getUserById = async (userId: string): Promise<User | undefined> => {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
-    
-  if (error) {
-    if (error.code === 'PGRST116') {
-      // No rows returned
-      return undefined;
+  try {
+    // Get user profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+      
+    if (profileError) {
+      if (profileError.code === 'PGRST116') {
+        // No rows returned
+        return undefined;
+      }
+      console.error('Error fetching user profile:', profileError);
+      throw profileError;
     }
-    console.error('Error fetching user:', error);
+    
+    // Get actual completed goals count
+    const { count: completedGoalsCount, error: goalsError } = await supabase
+      .from('goals')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('status', 'Completed');
+      
+    if (goalsError) {
+      console.error('Error counting completed goals for user:', goalsError);
+      throw goalsError;
+    }
+    
+    const actualCompletedGoals = completedGoalsCount || 0;
+    
+    // Update profile if the count is different
+    if (actualCompletedGoals !== profile.completed_goals) {
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ completed_goals: actualCompletedGoals })
+        .eq('id', userId);
+        
+      if (updateError) {
+        console.error('Error updating completed_goals count:', updateError);
+      }
+    }
+
+    return {
+      id: profile.id,
+      name: profile.name,
+      email: '',
+      avatar: profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.id}`,
+      streakCount: profile.streak_count || 0,
+      completedGoals: actualCompletedGoals,
+    };
+  } catch (error) {
+    console.error('Error in getUserById:', error);
     throw error;
   }
-
-  return {
-    id: data.id,
-    name: data.name,
-    email: '', // Email not stored in profiles for privacy
-    avatar: data.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.id}`,
-    streakCount: data.streak_count,
-    completedGoals: data.completed_goals,
-  };
 };
 
 // Get current authenticated user
@@ -240,31 +314,36 @@ export const updateUserStreakCount = async (userId: string, streakCount: number)
 
 // Increment completed goals count
 export const incrementCompletedGoals = async (userId: string): Promise<User> => {
-  // First get current count
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('completed_goals')
-    .eq('id', userId)
-    .single();
+  // Count current completed goals for accurate count
+  const { count, error: countError } = await supabase
+    .from('goals')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('status', 'Completed');
     
-  const newCount = (profile?.completed_goals || 0) + 1;
+  if (countError) {
+    console.error('Error counting completed goals:', countError);
+    throw countError;
+  }
+  
+  const completedGoalsCount = count || 0;
   
   const { data, error } = await supabase
     .from('profiles')
-    .update({ completed_goals: newCount })
+    .update({ completed_goals: completedGoalsCount })
     .eq('id', userId)
     .select()
     .single();
     
   if (error) {
-    console.error('Error incrementing completed goals:', error);
+    console.error('Error updating completed goals count:', error);
     throw error;
   }
 
   return {
     id: data.id,
     name: data.name,
-    email: '', // Email not stored in profiles for privacy
+    email: '', 
     avatar: data.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.id}`,
     streakCount: data.streak_count,
     completedGoals: data.completed_goals,

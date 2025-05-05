@@ -9,7 +9,7 @@ import { User } from "../types";
 import { supabase } from "@/integrations/supabase/client";
 
 const LeaderboardPage = () => {
-  const { users: storeUsers } = useGoalStore();
+  const { users: storeUsers, currentUser } = useGoalStore();
   const [refreshedUsers, setRefreshedUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -49,17 +49,47 @@ const LeaderboardPage = () => {
         }
       )
       .subscribe();
+    
+    // Also listen for goal completions
+    const goalsChannel = supabase
+      .channel('public:goals_leaderboard')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'goals',
+          filter: `status=eq.Completed`
+        },
+        (payload) => {
+          console.log('Goal completion received in leaderboard page:', payload);
+          // Refresh data when goals are completed
+          fetchLatestUserData();
+        }
+      )
+      .subscribe();
       
     return () => {
       supabase.removeChannel(profilesChannel);
+      supabase.removeChannel(goalsChannel);
     };
   }, [storeUsers]);
   
   // Use refreshed data, fallback to store data
   const users = refreshedUsers.length > 0 ? refreshedUsers : storeUsers;
   
-  // Sort users by streak count (descending)
-  const sortedUsers = [...users].sort((a, b) => b.streakCount - a.streakCount);
+  // Sort users by streak count (descending), then by completed goals if streaks are equal
+  const sortedUsers = [...users].sort((a, b) => {
+    if (b.streakCount === a.streakCount) {
+      return b.completedGoals - a.completedGoals;
+    }
+    return b.streakCount - a.streakCount;
+  });
+  
+  // Find current user's rank
+  const currentUserRank = currentUser 
+    ? sortedUsers.findIndex(user => user.id === currentUser.id) + 1 
+    : null;
   
   if (isLoading) {
     return (
@@ -80,9 +110,24 @@ const LeaderboardPage = () => {
   
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center gap-3 mb-6">
-        <Trophy className="h-6 w-6 text-yellow-500" />
-        <h1 className="text-2xl font-bold">Leaderboard</h1>
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <div className="flex items-center gap-3">
+          <Trophy className="h-6 w-6 text-yellow-500" />
+          <h1 className="text-2xl font-bold">Leaderboard</h1>
+        </div>
+        
+        {currentUserRank && currentUser && (
+          <div className="bg-muted px-4 py-2 rounded-md text-sm flex items-center gap-2">
+            <span>Your Rank:</span> 
+            <span className="font-bold">#{currentUserRank}</span>
+            <span className="mx-2">|</span>
+            <span>Streak:</span>
+            <span className="font-bold">{currentUser.streakCount}</span>
+            <span className="mx-2">|</span>
+            <span>Goals:</span>
+            <span className="font-bold">{currentUser.completedGoals}</span>
+          </div>
+        )}
       </div>
       
       {sortedUsers.length >= 3 ? (
@@ -154,7 +199,10 @@ const LeaderboardPage = () => {
                 </TableHeader>
                 <TableBody>
                   {sortedUsers.map((user, index) => (
-                    <TableRow key={user.id}>
+                    <TableRow 
+                      key={user.id}
+                      className={currentUser && user.id === currentUser.id ? "bg-muted/50" : ""}
+                    >
                       <TableCell className="font-medium">#{index + 1}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-3">
@@ -166,6 +214,9 @@ const LeaderboardPage = () => {
                             />
                           </div>
                           <span>{user.name}</span>
+                          {currentUser && user.id === currentUser.id && (
+                            <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">You</span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>{user.completedGoals}</TableCell>

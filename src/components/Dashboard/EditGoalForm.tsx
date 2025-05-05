@@ -27,6 +27,7 @@ import { cn } from '@/lib/utils';
 import { Goal, GoalCategory } from '../../types';
 import { useForm } from 'react-hook-form';
 import { useGoalStore } from '../../store/goalStore';
+import { toast } from '@/components/ui/use-toast';
 
 interface EditGoalFormProps {
   goal: Goal;
@@ -35,6 +36,7 @@ interface EditGoalFormProps {
 
 export const EditGoalForm = ({ goal, onClose }: EditGoalFormProps) => {
   const { updateGoal } = useGoalStore();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm({
     defaultValues: {
@@ -46,9 +48,25 @@ export const EditGoalForm = ({ goal, onClose }: EditGoalFormProps) => {
     }
   });
   
-  const onSubmit = (values: any) => {
-    updateGoal(goal.id, values);
-    onClose();
+  const onSubmit = async (values: any) => {
+    setIsSubmitting(true);
+    try {
+      await updateGoal(goal.id, values);
+      toast({
+        title: "Goal updated",
+        description: "Your goal has been updated successfully.",
+      });
+      onClose();
+    } catch (error) {
+      console.error("Error updating goal:", error);
+      toast({
+        title: "Update failed",
+        description: "There was an error updating your goal. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   const categories: GoalCategory[] = [
@@ -180,10 +198,12 @@ export const EditGoalForm = ({ goal, onClose }: EditGoalFormProps) => {
         />
         
         <div className="flex justify-between pt-2">
-          <Button type="button" variant="outline" onClick={onClose}>
+          <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button type="submit">Save Changes</Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Saving..." : "Save Changes"}
+          </Button>
         </div>
       </form>
     </Form>

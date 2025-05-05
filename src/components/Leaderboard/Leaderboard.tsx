@@ -31,9 +31,9 @@ export const Leaderboard = () => {
     
     fetchLatestUserData();
     
-    // Set up real-time subscription for profiles table updates
+    // Set up real-time subscription for profiles table updates AND goals table updates
     const profilesChannel = supabase
-      .channel('public:profiles_changes')
+      .channel('public:profiles_leaderboard_component')
       .on(
         'postgres_changes',
         {
@@ -42,8 +42,27 @@ export const Leaderboard = () => {
           table: 'profiles'
         },
         (payload) => {
-          console.log('Profiles change received in leaderboard:', payload);
+          console.log('Profiles change received in leaderboard component:', payload);
           // Refresh data when profiles are updated
+          fetchLatestUserData();
+        }
+      )
+      .subscribe();
+    
+    // Also subscribe to goal completions to update leaderboard in real-time  
+    const goalsChannel = supabase
+      .channel('public:goals_leaderboard_component')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'goals',
+          filter: `status=eq.Completed`
+        },
+        (payload) => {
+          console.log('Completed goal change received in leaderboard:', payload);
+          // Refresh data when goals are completed
           fetchLatestUserData();
         }
       )
@@ -51,14 +70,25 @@ export const Leaderboard = () => {
       
     return () => {
       supabase.removeChannel(profilesChannel);
+      supabase.removeChannel(goalsChannel);
     };
   }, [storeUsers]);
   
   // Use refreshed data, fallback to store data
   const users = refreshedUsers.length > 0 ? refreshedUsers : storeUsers;
   
-  // Sort users by streak count (descending)
-  const sortedUsers = [...users].sort((a, b) => b.streakCount - a.streakCount);
+  // Sort users by streak count (descending), then by completed goals if streaks are equal
+  const sortedUsers = [...users].sort((a, b) => {
+    if (b.streakCount === a.streakCount) {
+      return b.completedGoals - a.completedGoals;
+    }
+    return b.streakCount - a.streakCount;
+  });
+  
+  // Get current user's ranking
+  const currentUserRank = currentUser 
+    ? sortedUsers.findIndex(user => user.id === currentUser.id) + 1
+    : null;
   
   if (isLoading) {
     return (
@@ -84,6 +114,11 @@ export const Leaderboard = () => {
         <CardTitle className="text-lg flex items-center gap-2">
           <Trophy className="h-5 w-5 text-yellow-500" />
           Leaderboard
+          {currentUserRank && (
+            <span className="text-xs bg-muted px-2 py-1 rounded-full ml-auto">
+              Your Rank: #{currentUserRank}
+            </span>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-2">
@@ -92,12 +127,12 @@ export const Leaderboard = () => {
             No leaderboard data available
           </div>
         ) : (
-          sortedUsers.map((user, index) => (
+          sortedUsers.slice(0, 5).map((user, index) => (
             <div 
               key={user.id} 
               className={`flex items-center justify-between py-2 ${
-                index !== sortedUsers.length - 1 ? "border-b" : ""
-              }`}
+                index !== Math.min(sortedUsers.length - 1, 4) ? "border-b" : ""
+              } ${currentUser && user.id === currentUser.id ? "bg-muted/50 rounded-md px-2" : ""}`}
             >
               <div className="flex items-center gap-3">
                 <div className="relative">
