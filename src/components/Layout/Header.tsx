@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useGoalStore } from "../../store/goalStore";
@@ -69,7 +70,7 @@ export const Header = ({ toggleSidebar }: HeaderProps) => {
             <Search className="h-5 w-5" />
           </Button>
           
-          <Link to="/new-goal">
+          <Link to="/goals">
             <Button variant="ghost" size="icon">
               <Plus className="h-5 w-5" />
             </Button>
@@ -110,9 +111,11 @@ export const Header = ({ toggleSidebar }: HeaderProps) => {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <User className="mr-2 h-4 w-4" />
-                <span>Profile</span>
+              <DropdownMenuItem asChild>
+                <Link to="/settings">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={logout}>
                 <LogOut className="mr-2 h-4 w-4" />

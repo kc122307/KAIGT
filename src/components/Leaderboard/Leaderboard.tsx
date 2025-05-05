@@ -68,9 +68,28 @@ export const Leaderboard = () => {
       )
       .subscribe();
       
+    // Also subscribe to activities to update streaks in real-time
+    const activitiesChannel = supabase
+      .channel('public:activities_leaderboard_component')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'activities'
+        },
+        (payload) => {
+          console.log('Activity change received in leaderboard:', payload);
+          // Refresh data when activities are changed
+          fetchLatestUserData();
+        }
+      )
+      .subscribe();
+      
     return () => {
       supabase.removeChannel(profilesChannel);
       supabase.removeChannel(goalsChannel);
+      supabase.removeChannel(activitiesChannel);
     };
   }, [storeUsers]);
   
