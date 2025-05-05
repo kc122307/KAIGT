@@ -12,6 +12,7 @@ interface RegisterFormFieldsProps {
   password: string;
   setPassword: (password: string) => void;
   isLoading: boolean;
+  handleSubmit: (event: React.FormEvent) => Promise<void>; // Add handleSubmit prop
 }
 
 export const RegisterFormFields = ({
@@ -21,10 +22,11 @@ export const RegisterFormFields = ({
   setEmail,
   password,
   setPassword,
-  isLoading
+  isLoading,
+  handleSubmit
 }: RegisterFormFieldsProps) => {
   return (
-    <>
+    <form onSubmit={handleSubmit}>
       <div className="space-y-2">
         <Label htmlFor="name">Name</Label>
         <Input
@@ -74,7 +76,7 @@ export const RegisterFormFields = ({
       
       <Button
         type="submit"
-        className="w-full"
+        className="w-full mt-4"
         disabled={isLoading}
       >
         {isLoading ? (
@@ -86,6 +88,6 @@ export const RegisterFormFields = ({
           "Create Account"
         )}
       </Button>
-    </>
+    </form>
   );
 };

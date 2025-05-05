@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '../../types';
 
@@ -23,11 +24,11 @@ export const getCurrentUser = async (): Promise<User | null> => {
   return {
     id: profile.id,
     name: profile.name,
-    email: profile.email || '',
+    email: user.email || '',
     avatar: profile.avatar || '',
     completedGoals: profile.completed_goals || 0,
     streakCount: profile.streak_count || 0,
-    lastActive: profile.last_active ? new Date(profile.last_active) : null
+    lastActive: profile.updated_at ? new Date(profile.updated_at) : null
   };
 };
 
@@ -58,7 +59,6 @@ export const register = async (name: string, email: string, password: string): P
     .insert({
       id: user.id,
       name: name,
-      email: email,
     })
     .select()
     .single();
@@ -71,11 +71,11 @@ export const register = async (name: string, email: string, password: string): P
   return {
     id: profile.id,
     name: profile.name,
-    email: profile.email || '',
+    email: email,
     avatar: profile.avatar || '',
     completedGoals: profile.completed_goals || 0,
     streakCount: profile.streak_count || 0,
-    lastActive: profile.last_active ? new Date(profile.last_active) : null
+    lastActive: profile.updated_at ? new Date(profile.updated_at) : null
   };
 };
 
@@ -109,11 +109,11 @@ export const login = async (email: string, password: string): Promise<User> => {
   return {
     id: profile.id,
     name: profile.name,
-    email: profile.email || '',
+    email: email,
     avatar: profile.avatar || '',
     completedGoals: profile.completed_goals || 0,
     streakCount: profile.streak_count || 0,
-    lastActive: profile.last_active ? new Date(profile.last_active) : null
+    lastActive: profile.updated_at ? new Date(profile.updated_at) : null
   };
 };
 
@@ -160,7 +160,7 @@ export const getUsers = async (forceRefresh = false): Promise<User[]> => {
           .from('activities')
           .select('*')
           .eq('user_id', profile.id)
-          .order('created_at', { ascending: false });
+          .order('timestamp', { ascending: false });
           
         if (activitiesError) throw activitiesError;
         
@@ -171,7 +171,7 @@ export const getUsers = async (forceRefresh = false): Promise<User[]> => {
         
         if (activities && activities.length > 0) {
           // Check if there's any activity today
-          const mostRecentActivity = new Date(activities[0].created_at);
+          const mostRecentActivity = new Date(activities[0].timestamp);
           mostRecentActivity.setHours(0, 0, 0, 0); // Normalize to start of day
           
           const isActiveToday = mostRecentActivity.getTime() === currentDate.getTime();
@@ -184,7 +184,7 @@ export const getUsers = async (forceRefresh = false): Promise<User[]> => {
             prevDate.setDate(prevDate.getDate() - 1); // Start checking from yesterday
             
             for (let i = 1; i < activities.length; i++) {
-              const activityDate = new Date(activities[i].created_at);
+              const activityDate = new Date(activities[i].timestamp);
               activityDate.setHours(0, 0, 0, 0); // Normalize to start of day
               
               // If this activity is from the previous consecutive day
@@ -203,11 +203,11 @@ export const getUsers = async (forceRefresh = false): Promise<User[]> => {
         return {
           id: profile.id,
           name: profile.name,
-          email: profile.email || '',
+          email: '', // Default empty email as it's optional in our User type
           avatar: profile.avatar || '',
           completedGoals: completedGoals?.length || 0,
           streakCount: streak,
-          lastActive: profile.last_active ? new Date(profile.last_active) : null
+          lastActive: profile.updated_at ? new Date(profile.updated_at) : null
         };
       } catch (error) {
         console.error(`Error fetching data for user ${profile.id}:`, error);
@@ -215,11 +215,11 @@ export const getUsers = async (forceRefresh = false): Promise<User[]> => {
         return {
           id: profile.id,
           name: profile.name,
-          email: profile.email || '',
+          email: '', // Default empty email
           avatar: profile.avatar || '',
           completedGoals: 0,
           streakCount: 0,
-          lastActive: profile.last_active ? new Date(profile.last_active) : null
+          lastActive: profile.updated_at ? new Date(profile.updated_at) : null
         };
       }
     }));
@@ -231,10 +231,10 @@ export const getUsers = async (forceRefresh = false): Promise<User[]> => {
   return profiles.map(profile => ({
     id: profile.id,
     name: profile.name,
-    email: profile.email || '',
+    email: '', // Default empty email as it's optional in our User type
     avatar: profile.avatar || '',
     completedGoals: profile.completed_goals || 0,
     streakCount: profile.streak_count || 0,
-    lastActive: profile.last_active ? new Date(profile.last_active) : null
+    lastActive: profile.updated_at ? new Date(profile.updated_at) : null
   }));
 };

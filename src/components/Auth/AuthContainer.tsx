@@ -4,10 +4,10 @@ import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 
 interface AuthContainerProps {
   children: ReactNode;
-  footerText: string;
+  footerText?: string; // Make footerText optional
 }
 
-export const AuthContainer = ({ children, footerText }: AuthContainerProps) => {
+export const AuthContainer = ({ children, footerText = "GoalTracker 2025 - All rights reserved" }: AuthContainerProps) => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
       <div className="w-full max-w-md">

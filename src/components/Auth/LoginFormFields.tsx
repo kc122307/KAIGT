@@ -13,6 +13,7 @@ interface LoginFormFieldsProps {
   password: string;
   setPassword: (password: string) => void;
   isLoading: boolean;
+  handleSubmit: (event: React.FormEvent) => Promise<void>; // Add handleSubmit prop
 }
 
 export const LoginFormFields = ({
@@ -20,7 +21,8 @@ export const LoginFormFields = ({
   setEmail,
   password,
   setPassword,
-  isLoading
+  isLoading,
+  handleSubmit
 }: LoginFormFieldsProps) => {
   const [resendingEmail, setResendingEmail] = useState(false);
   
@@ -77,7 +79,7 @@ export const LoginFormFields = ({
   };
   
   return (
-    <>
+    <form onSubmit={handleSubmit}>
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <div className="relative">
@@ -118,7 +120,7 @@ export const LoginFormFields = ({
         </div>
       </div>
       
-      <div className="flex flex-col space-y-2">
+      <div className="flex flex-col space-y-2 mt-4">
         <Button
           type="submit"
           className="w-full"
@@ -152,6 +154,6 @@ export const LoginFormFields = ({
           )}
         </Button>
       </div>
-    </>
+    </form>
   );
 };

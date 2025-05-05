@@ -1,5 +1,4 @@
 
-
 export type GoalCategory = 'Personal' | 'Work' | 'Health' | 'Education' | 'Finance' | 'Social';
 
 export type GoalStatus = 'Completed' | 'In-Progress' | 'Pending';
@@ -21,10 +20,11 @@ export type Goal = {
 export type User = {
   id: string;
   name: string;
-  email: string;
+  email?: string;
   avatar: string;
   streakCount: number;
   completedGoals: number;
+  lastActive?: Date | null;
 };
 
 export type Activity = {
@@ -34,6 +34,7 @@ export type Activity = {
   action_type: 'created' | 'updated' | 'completed' | 'deleted';
   details: string;
   timestamp: Date;
+  created_at?: string; // Adding this field to match what's coming from the API
 };
 
 export type Notification = {
@@ -46,4 +47,3 @@ export type Notification = {
   type: 'deadline' | 'inactivity' | 'achievement' | 'collaboration';
   goal_id?: string;
 };
-
