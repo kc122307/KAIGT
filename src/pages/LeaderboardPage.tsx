@@ -6,6 +6,7 @@ import { Trophy, Medal } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getUsers } from "../services/api/userService";
 import { User } from "../types";
+import { supabase } from "@/integrations/supabase/client";
 
 const LeaderboardPage = () => {
   const { users: storeUsers } = useGoalStore();
@@ -18,6 +19,7 @@ const LeaderboardPage = () => {
       setIsLoading(true);
       try {
         const latestUsers = await getUsers();
+        console.log("Fetched latest users for leaderboard page:", latestUsers);
         setRefreshedUsers(latestUsers);
       } catch (error) {
         console.error("Error fetching latest user data:", error);
@@ -29,6 +31,28 @@ const LeaderboardPage = () => {
     };
     
     fetchLatestUserData();
+    
+    // Set up real-time subscription for profiles table updates
+    const profilesChannel = supabase
+      .channel('public:profiles_leaderboard')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles'
+        },
+        (payload) => {
+          console.log('Profiles change received in leaderboard page:', payload);
+          // Refresh data when profiles are updated
+          fetchLatestUserData();
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(profilesChannel);
+    };
   }, [storeUsers]);
   
   // Use refreshed data, fallback to store data

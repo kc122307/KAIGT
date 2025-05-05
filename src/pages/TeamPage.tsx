@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Users } from "lucide-react";
 import { getUsers } from "../services/api/userService";
 import { User } from "../types";
+import { supabase } from "@/integrations/supabase/client";
 
 const TeamPage = () => {
   const { users: storeUsers } = useGoalStore();
@@ -19,6 +20,7 @@ const TeamPage = () => {
       setIsLoading(true);
       try {
         const latestUsers = await getUsers();
+        console.log("Fetched latest users for team page:", latestUsers);
         setRefreshedUsers(latestUsers);
       } catch (error) {
         console.error("Error fetching latest user data:", error);
@@ -30,6 +32,28 @@ const TeamPage = () => {
     };
     
     fetchLatestUserData();
+    
+    // Set up real-time subscription for profiles table updates
+    const profilesChannel = supabase
+      .channel('public:profiles_team')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles'
+        },
+        (payload) => {
+          console.log('Profiles change received in team page:', payload);
+          // Refresh data when profiles are updated
+          fetchLatestUserData();
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(profilesChannel);
+    };
   }, [storeUsers]);
   
   // Use refreshed data, fallback to store data

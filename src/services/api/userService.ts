@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '../../types';
 
@@ -12,13 +13,15 @@ export const getUsers = async (): Promise<User[]> => {
     throw error;
   }
 
+  console.log('Raw profiles data from DB:', data);
+
   return data.map(profile => ({
     id: profile.id,
     name: profile.name,
     email: '', // Email not stored in profiles for privacy
     avatar: profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.id}`,
-    streakCount: profile.streak_count,
-    completedGoals: profile.completed_goals,
+    streakCount: profile.streak_count || 0,
+    completedGoals: profile.completed_goals || 0,
   }));
 };
 
