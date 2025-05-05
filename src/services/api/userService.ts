@@ -169,15 +169,17 @@ export const getUsers = async (forceRefresh = false): Promise<User[]> => {
         let currentDate = new Date();
         currentDate.setHours(0, 0, 0, 0); // Normalize to start of day
         
+        // Check if there's any activity
         if (activities && activities.length > 0) {
-          // Check if there's any activity today
+          // Get the date of the most recent activity
           const mostRecentActivity = new Date(activities[0].timestamp);
           mostRecentActivity.setHours(0, 0, 0, 0); // Normalize to start of day
           
+          // Compare with today's date
           const isActiveToday = mostRecentActivity.getTime() === currentDate.getTime();
           
           if (isActiveToday) {
-            streak = 1; // Start with 1 for today
+            streak = 1; // Always start with 1 for today's activity
             
             // Check consecutive days before today
             let prevDate = new Date(currentDate);
@@ -197,8 +199,35 @@ export const getUsers = async (forceRefresh = false): Promise<User[]> => {
                 break;
               }
             }
+          } else {
+            // If there's no activity today, but there was yesterday, count the streak without today
+            const yesterday = new Date(currentDate);
+            yesterday.setDate(yesterday.getDate() - 1);
+            yesterday.setHours(0, 0, 0, 0);
+            
+            if (mostRecentActivity.getTime() === yesterday.getTime()) {
+              streak = 1; // Start with 1 for yesterday
+              
+              let prevDate = new Date(yesterday);
+              prevDate.setDate(prevDate.getDate() - 1); // Start from the day before yesterday
+              
+              for (let i = 1; i < activities.length; i++) {
+                const activityDate = new Date(activities[i].timestamp);
+                activityDate.setHours(0, 0, 0, 0);
+                
+                if (activityDate.getTime() === prevDate.getTime()) {
+                  streak++;
+                  prevDate.setDate(prevDate.getDate() - 1);
+                } else if (activityDate.getTime() < prevDate.getTime()) {
+                  break;
+                }
+              }
+            }
           }
         }
+        
+        // Log the streak calculation for debugging
+        console.log(`User ${profile.name} has streak: ${streak}`);
         
         return {
           id: profile.id,

@@ -18,7 +18,8 @@ const LeaderboardPage = () => {
     const fetchLatestUserData = async () => {
       setIsLoading(true);
       try {
-        const latestUsers = await getUsers();
+        // Force refresh to get accurate streak data
+        const latestUsers = await getUsers(true);
         console.log("Fetched latest users for leaderboard page:", latestUsers);
         setRefreshedUsers(latestUsers);
       } catch (error) {
@@ -56,14 +57,31 @@ const LeaderboardPage = () => {
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*', // Listen to all events, not just UPDATE
           schema: 'public',
-          table: 'goals',
-          filter: `status=eq.Completed`
+          table: 'goals'
         },
         (payload) => {
-          console.log('Goal completion received in leaderboard page:', payload);
-          // Refresh data when goals are completed
+          console.log('Goal event received in leaderboard page:', payload);
+          // Refresh data when goals are updated
+          fetchLatestUserData();
+        }
+      )
+      .subscribe();
+      
+    // Also listen for activity changes to update streak counts
+    const activitiesChannel = supabase
+      .channel('public:activities_leaderboard')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'activities'
+        },
+        (payload) => {
+          console.log('Activity event received in leaderboard page:', payload);
+          // Refresh data when activities are updated
           fetchLatestUserData();
         }
       )
@@ -72,6 +90,7 @@ const LeaderboardPage = () => {
     return () => {
       supabase.removeChannel(profilesChannel);
       supabase.removeChannel(goalsChannel);
+      supabase.removeChannel(activitiesChannel);
     };
   }, [storeUsers]);
   
