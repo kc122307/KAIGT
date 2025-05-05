@@ -38,6 +38,12 @@ export const AuthRoute = ({ children }: AuthRouteProps) => {
 
   // Check if user is authenticated
   if (!isAuthenticated || !currentUser) {
+    // Store current path for redirect after login
+    const returnPath = location.pathname && location.pathname !== '/' ? location.pathname : null;
+    if (returnPath) {
+      sessionStorage.setItem('lastVisitedPath', returnPath);
+    }
+    
     // Redirect to login page with the return url
     return <Navigate to="/login" state={{ from: location }} replace />;
   }

@@ -10,14 +10,15 @@ import { supabase } from "@/integrations/supabase/client";
 export const Leaderboard = () => {
   const { users: storeUsers, currentUser } = useGoalStore();
   const [refreshedUsers, setRefreshedUsers] = useState<User[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Fetch fresh user data to ensure we have updated streak counts and completed goals
   useEffect(() => {
     const fetchLatestUserData = async () => {
       setIsLoading(true);
       try {
-        const latestUsers = await getUsers();
+        // Force refresh from API rather than using cached data
+        const latestUsers = await getUsers(true);
         console.log("Fetched latest users for leaderboard:", latestUsers);
         setRefreshedUsers(latestUsers);
       } catch (error) {
@@ -55,14 +56,13 @@ export const Leaderboard = () => {
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
-          table: 'goals',
-          filter: `status=eq.Completed`
+          table: 'goals'
         },
         (payload) => {
-          console.log('Completed goal change received in leaderboard:', payload);
-          // Refresh data when goals are completed
+          console.log('Goal change received in leaderboard:', payload);
+          // Refresh data when goals are changed
           fetchLatestUserData();
         }
       )

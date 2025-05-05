@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,8 +8,9 @@ import { ThemeProvider } from "./components/ThemeProvider";
 import { AppLayout } from "./components/Layout/AppLayout";
 import { AuthRoute } from "./components/Auth/AuthRoute";
 import { LoginForm } from "./components/Auth/LoginForm";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useGoalStore } from "./store/goalStore";
+import { supabase } from "@/integrations/supabase/client";
 
 // Pages
 import Index from "./pages/Index";
@@ -36,18 +38,37 @@ const queryClient = new QueryClient({
 const AppInitializer = ({ children }: { children: React.ReactNode }) => {
   const fetchUserData = useGoalStore(state => state.fetchUserData);
   const isAuthenticated = useGoalStore(state => state.isAuthenticated);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Store last visited path in session storage
+  useEffect(() => {
+    // Only save paths that aren't login or non-existing routes
+    if (location.pathname !== '/login' && location.pathname !== '*') {
+      sessionStorage.setItem('lastVisitedPath', location.pathname);
+    }
+  }, [location.pathname]);
+
   useEffect(() => {
     // Initialize app data
-    fetchUserData().catch(console.error);
+    const init = async () => {
+      try {
+        await fetchUserData();
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
     
-    // Redirect to login if not authenticated and not already on login page
-    if (!isAuthenticated && location.pathname !== '/login') {
-      navigate('/login', { replace: true });
-    }
-  }, [fetchUserData, isAuthenticated, navigate, location.pathname]);
+    init();
+  }, [fetchUserData]);
+
+  // Don't redirect during the auth check to prevent flashes
+  if (isCheckingAuth) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
 
   return <>{children}</>;
 };

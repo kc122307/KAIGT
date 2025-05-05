@@ -28,6 +28,7 @@ import { Goal, GoalCategory } from '../../types';
 import { useForm } from 'react-hook-form';
 import { useGoalStore } from '../../store/goalStore';
 import { toast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface EditGoalFormProps {
   goal: Goal;
@@ -51,7 +52,34 @@ export const EditGoalForm = ({ goal, onClose }: EditGoalFormProps) => {
   const onSubmit = async (values: any) => {
     setIsSubmitting(true);
     try {
-      await updateGoal(goal.id, values);
+      // Convert form values to the format expected by the API
+      const goalUpdate = {
+        title: values.title,
+        description: values.description,
+        category: values.category,
+        deadline: values.deadline,
+        is_public: values.isPublic,
+        // Preserve other fields
+        status: goal.status,
+        progress: goal.progress
+      };
+      
+      // Update goal directly in Supabase first
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("User not authenticated");
+      }
+      
+      const { error } = await supabase
+        .from('goals')
+        .update(goalUpdate)
+        .eq('id', goal.id);
+        
+      if (error) throw error;
+      
+      // Then update in store
+      await updateGoal(goal.id, goalUpdate);
+      
       toast({
         title: "Goal updated",
         description: "Your goal has been updated successfully.",

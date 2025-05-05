@@ -1,351 +1,240 @@
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '../../types';
 
-// Get all users
-export const getUsers = async (): Promise<User[]> => {
-  try {
-    // First, get all profiles
-    const { data: profiles, error: profilesError } = await supabase
-      .from('profiles')
-      .select('*');
-      
-    if (profilesError) {
-      console.error('Error fetching profiles:', profilesError);
-      throw profilesError;
-    }
-    
-    // Then, get the completed goals count for each user
-    const usersWithData = await Promise.all(profiles.map(async (profile) => {
-      // Count completed goals for this user
-      const { count: completedGoalsCount, error: goalsError } = await supabase
-        .from('goals')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', profile.id)
-        .eq('status', 'Completed');
-        
-      if (goalsError) {
-        console.error('Error counting completed goals:', goalsError);
-        return {
-          id: profile.id,
-          name: profile.name,
-          email: '',
-          avatar: profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.id}`,
-          streakCount: profile.streak_count || 0,
-          completedGoals: profile.completed_goals || 0,
-        };
-      }
-      
-      // If the count is different from what's stored in the profile,
-      // update the profile with the correct count
-      const actualCompletedGoals = completedGoalsCount || 0;
-      if (actualCompletedGoals !== profile.completed_goals) {
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ completed_goals: actualCompletedGoals })
-          .eq('id', profile.id);
-          
-        if (updateError) {
-          console.error('Error updating completed_goals count:', updateError);
-        }
-      }
-      
-      return {
-        id: profile.id,
-        name: profile.name,
-        email: '',
-        avatar: profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.id}`,
-        streakCount: profile.streak_count || 0,
-        completedGoals: actualCompletedGoals,
-      };
-    }));
-
-    console.log('Users with accurate completion data:', usersWithData);
-    return usersWithData;
-  } catch (error) {
-    console.error('Error in getUsers:', error);
-    throw error;
-  }
-};
-
-// Get a specific user
-export const getUserById = async (userId: string): Promise<User | undefined> => {
-  try {
-    // Get user profile
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-      
-    if (profileError) {
-      if (profileError.code === 'PGRST116') {
-        // No rows returned
-        return undefined;
-      }
-      console.error('Error fetching user profile:', profileError);
-      throw profileError;
-    }
-    
-    // Get actual completed goals count
-    const { count: completedGoalsCount, error: goalsError } = await supabase
-      .from('goals')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('status', 'Completed');
-      
-    if (goalsError) {
-      console.error('Error counting completed goals for user:', goalsError);
-      throw goalsError;
-    }
-    
-    const actualCompletedGoals = completedGoalsCount || 0;
-    
-    // Update profile if the count is different
-    if (actualCompletedGoals !== profile.completed_goals) {
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ completed_goals: actualCompletedGoals })
-        .eq('id', userId);
-        
-      if (updateError) {
-        console.error('Error updating completed_goals count:', updateError);
-      }
-    }
-
-    return {
-      id: profile.id,
-      name: profile.name,
-      email: '',
-      avatar: profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.id}`,
-      streakCount: profile.streak_count || 0,
-      completedGoals: actualCompletedGoals,
-    };
-  } catch (error) {
-    console.error('Error in getUserById:', error);
-    throw error;
-  }
-};
-
-// Get current authenticated user
+// Get current user
 export const getCurrentUser = async (): Promise<User | null> => {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
   
-  if (!session) {
+  if (!user) {
     return null;
   }
   
-  try {
-    const user = await getUserById(session.user.id);
-    return user || null;
-  } catch (error) {
-    console.error('Error getting current user:', error);
-    return null;
-  }
-};
-
-// Login a user
-export const login = async (email: string, password: string): Promise<User> => {
-  console.log('Attempting login with:', email);
-  
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password
-  });
-  
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+    
   if (error) {
-    console.error('Login error:', error);
+    console.error('Error fetching profile:', error);
     throw error;
-  }
-  
-  if (!data.user) {
-    throw new Error('Login failed: No user data returned');
-  }
-  
-  // Wait a moment to ensure the profile is available
-  // Sometimes there's a slight delay between auth success and profile availability
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  const profile = await getUserById(data.user.id);
-  if (!profile) {
-    throw new Error('User profile not found');
   }
   
   return {
-    ...profile,
-    email: data.user.email || '',
+    id: profile.id,
+    name: profile.name,
+    email: profile.email || '',
+    avatar: profile.avatar || '',
+    completedGoals: profile.completed_goals || 0,
+    streakCount: profile.streak_count || 0,
+    lastActive: profile.last_active ? new Date(profile.last_active) : null
   };
 };
 
 // Register a new user
 export const register = async (name: string, email: string, password: string): Promise<User> => {
-  console.log('Registering user:', email);
-  
-  // First check if this user already exists but just needs to verify email
-  try {
-    const { data: existingUser } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    
-    if (existingUser && existingUser.user) {
-      // User exists but probably needs email verification
-      // Let's try to resend the verification email
-      await supabase.auth.resend({
-        type: 'signup',
-        email,
-      });
-      
-      throw new Error('User already exists. Please verify your email to continue.');
-    }
-  } catch (err) {
-    // If login failed due to invalid credentials, proceed with registration
-    // Otherwise rethrow the "user exists" error
-    if (!(err instanceof Error) || !err.message.includes('Invalid login credentials')) {
-      throw err;
-    }
-  }
-  
-  // Proceed with registration
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
+  const { data: { user }, error: registerError } = await supabase.auth.signUp({
+    email: email,
+    password: password,
     options: {
       data: {
-        name,
-      },
-      emailRedirectTo: `${window.location.origin}/login`
+        name: name,
+      }
     }
   });
   
-  if (error) {
-    console.error('Registration error:', error);
-    throw error;
+  if (registerError) {
+    console.error('Error registering user:', registerError);
+    throw registerError;
   }
   
-  if (!data.user) {
-    throw new Error('Registration failed: No user data returned');
+  if (!user) {
+    throw new Error("User registration failed");
   }
   
-  console.log('User registered successfully, checking for profile creation...');
-  
-  // Wait longer for the profile to be created by database trigger
-  // The handle_new_user function needs time to run
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  // Check if the profile was created
-  try {
-    const profile = await getUserById(data.user.id);
-    if (!profile) {
-      console.error('Profile not created after registration. Creating manually...');
-      
-      // Create the profile manually if the trigger didn't work
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .insert([
-          { 
-            id: data.user.id, 
-            name: name,
-            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.user.id}`,
-            streak_count: 0,
-            completed_goals: 0
-          }
-        ])
-        .select()
-        .single();
-      
-      if (profileError) {
-        console.error('Error creating profile manually:', profileError);
-        throw new Error('Failed to create user profile');
-      }
-      
-      return {
-        id: profileData.id,
-        name: profileData.name,
-        email: data.user.email || '',
-        avatar: profileData.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profileData.id}`,
-        streakCount: profileData.streak_count,
-        completedGoals: profileData.completed_goals,
-      };
-    }
+  // Create a user profile in the profiles table
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .insert({
+      id: user.id,
+      name: name,
+      email: email,
+    })
+    .select()
+    .single();
     
-    return {
-      ...profile,
-      email: data.user.email || '',
-    };
-  } catch (error) {
-    console.error('Error checking/creating profile:', error);
-    throw new Error('User profile not found after registration');
+  if (profileError) {
+    console.error('Error creating user profile:', profileError);
+    throw profileError;
   }
+  
+  return {
+    id: profile.id,
+    name: profile.name,
+    email: profile.email || '',
+    avatar: profile.avatar || '',
+    completedGoals: profile.completed_goals || 0,
+    streakCount: profile.streak_count || 0,
+    lastActive: profile.last_active ? new Date(profile.last_active) : null
+  };
 };
 
-// Logout current user
+// Login an existing user
+export const login = async (email: string, password: string): Promise<User> => {
+  const { data: { user }, error: loginError } = await supabase.auth.signInWithPassword({
+    email: email,
+    password: password,
+  });
+  
+  if (loginError) {
+    console.error('Error logging in user:', loginError);
+    throw loginError;
+  }
+  
+  if (!user) {
+    throw new Error("User login failed");
+  }
+  
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+    
+  if (profileError) {
+    console.error('Error fetching user profile:', profileError);
+    throw profileError;
+  }
+  
+  return {
+    id: profile.id,
+    name: profile.name,
+    email: profile.email || '',
+    avatar: profile.avatar || '',
+    completedGoals: profile.completed_goals || 0,
+    streakCount: profile.streak_count || 0,
+    lastActive: profile.last_active ? new Date(profile.last_active) : null
+  };
+};
+
+// Logout user
 export const logout = async (): Promise<void> => {
   const { error } = await supabase.auth.signOut();
   
   if (error) {
-    console.error('Logout error:', error);
+    console.error('Error logging out user:', error);
     throw error;
   }
 };
 
-// Update user streak count
-export const updateUserStreakCount = async (userId: string, streakCount: number): Promise<User> => {
-  const { data, error } = await supabase
-    .from('profiles')
-    .update({ streak_count: streakCount })
-    .eq('id', userId)
-    .select()
-    .single();
-    
-  if (error) {
-    console.error('Error updating user streak count:', error);
-    throw error;
-  }
-
-  return {
-    id: data.id,
-    name: data.name,
-    email: '', // Email not stored in profiles for privacy
-    avatar: data.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.id}`,
-    streakCount: data.streak_count,
-    completedGoals: data.completed_goals,
-  };
-};
-
-// Increment completed goals count
-export const incrementCompletedGoals = async (userId: string): Promise<User> => {
-  // Count current completed goals for accurate count
-  const { count, error: countError } = await supabase
-    .from('goals')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .eq('status', 'Completed');
-    
-  if (countError) {
-    console.error('Error counting completed goals:', countError);
-    throw countError;
-  }
+// Get all users
+export const getUsers = async (forceRefresh = false): Promise<User[]> => {
+  const { data: { session } } = await supabase.auth.getSession();
   
-  const completedGoalsCount = count || 0;
-  
-  const { data, error } = await supabase
+  // Fetch users from profiles table
+  const { data: profiles, error: profilesError } = await supabase
     .from('profiles')
-    .update({ completed_goals: completedGoalsCount })
-    .eq('id', userId)
-    .select()
-    .single();
+    .select('*');
     
-  if (error) {
-    console.error('Error updating completed goals count:', error);
-    throw error;
+  if (profilesError) {
+    console.error('Error fetching profiles:', profilesError);
+    throw profilesError;
   }
 
-  return {
-    id: data.id,
-    name: data.name,
-    email: '', 
-    avatar: data.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.id}`,
-    streakCount: data.streak_count,
-    completedGoals: data.completed_goals,
-  };
+  // If we need fresh counts, we need to calculate them for each user
+  if (forceRefresh) {
+    // For each profile, fetch their completed goal count and calculate streak
+    const usersWithStats = await Promise.all(profiles.map(async (profile) => {
+      try {
+        // Get completed goals
+        const { data: completedGoals, error: goalsError } = await supabase
+          .from('goals')
+          .select('*')
+          .eq('user_id', profile.id)
+          .eq('status', 'Completed');
+          
+        if (goalsError) throw goalsError;
+        
+        // Get all activity to calculate streak
+        const { data: activities, error: activitiesError } = await supabase
+          .from('activities')
+          .select('*')
+          .eq('user_id', profile.id)
+          .order('created_at', { ascending: false });
+          
+        if (activitiesError) throw activitiesError;
+        
+        // Calculate current streak based on daily activities
+        let streak = 0;
+        let currentDate = new Date();
+        currentDate.setHours(0, 0, 0, 0); // Normalize to start of day
+        
+        if (activities && activities.length > 0) {
+          // Check if there's any activity today
+          const mostRecentActivity = new Date(activities[0].created_at);
+          mostRecentActivity.setHours(0, 0, 0, 0); // Normalize to start of day
+          
+          const isActiveToday = mostRecentActivity.getTime() === currentDate.getTime();
+          
+          if (isActiveToday) {
+            streak = 1; // Start with 1 for today
+            
+            // Check consecutive days before today
+            let prevDate = new Date(currentDate);
+            prevDate.setDate(prevDate.getDate() - 1); // Start checking from yesterday
+            
+            for (let i = 1; i < activities.length; i++) {
+              const activityDate = new Date(activities[i].created_at);
+              activityDate.setHours(0, 0, 0, 0); // Normalize to start of day
+              
+              // If this activity is from the previous consecutive day
+              if (activityDate.getTime() === prevDate.getTime()) {
+                streak++;
+                // Move to the day before
+                prevDate.setDate(prevDate.getDate() - 1);
+              } else if (activityDate.getTime() < prevDate.getTime()) {
+                // If we skipped a day, stop counting
+                break;
+              }
+            }
+          }
+        }
+        
+        return {
+          id: profile.id,
+          name: profile.name,
+          email: profile.email || '',
+          avatar: profile.avatar || '',
+          completedGoals: completedGoals?.length || 0,
+          streakCount: streak,
+          lastActive: profile.last_active ? new Date(profile.last_active) : null
+        };
+      } catch (error) {
+        console.error(`Error fetching data for user ${profile.id}:`, error);
+        // Return user with default values if we can't get their stats
+        return {
+          id: profile.id,
+          name: profile.name,
+          email: profile.email || '',
+          avatar: profile.avatar || '',
+          completedGoals: 0,
+          streakCount: 0,
+          lastActive: profile.last_active ? new Date(profile.last_active) : null
+        };
+      }
+    }));
+    
+    return usersWithStats;
+  }
+
+  // Convert profiles to User type
+  return profiles.map(profile => ({
+    id: profile.id,
+    name: profile.name,
+    email: profile.email || '',
+    avatar: profile.avatar || '',
+    completedGoals: profile.completed_goals || 0,
+    streakCount: profile.streak_count || 0,
+    lastActive: profile.last_active ? new Date(profile.last_active) : null
+  }));
 };
