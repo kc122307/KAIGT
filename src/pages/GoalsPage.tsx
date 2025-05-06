@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PlusCircle, Filter } from "lucide-react";
 import { useGoalStore } from "../store/goalStore";
 import { GoalList } from "../components/Dashboard/GoalList";
@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AddGoalModal } from "../components/Dashboard/AddGoalModal";
 import { GoalCategory, GoalStatus } from "../types";
+import { getUsers } from "../services/api/userService";
+import { supabase } from "@/integrations/supabase/client";
+import { Stats } from "../components/Dashboard/Stats";
 
 // Get the proper types from GoalFilters and AddGoalModal components
 interface GoalFiltersProps {
@@ -29,6 +32,8 @@ const GoalsPage = () => {
   const setFilterCategory = useGoalStore(state => state.setFilterCategory);
   const setFilterStatus = useGoalStore(state => state.setFilterStatus);
   const goals = useGoalStore(state => state.goals);
+  const currentUser = useGoalStore(state => state.currentUser);
+  const [completedGoalsCount, setCompletedGoalsCount] = useState(0);
 
   // Filter goals based on category and status
   const filteredGoals = goals.filter(goal => {
@@ -36,6 +41,63 @@ const GoalsPage = () => {
     const statusMatch = filterStatus === 'All' || goal.status === filterStatus;
     return categoryMatch && statusMatch;
   });
+
+  // Fetch accurate goal completion count when component mounts
+  useEffect(() => {
+    const fetchCompletedGoalsCount = async () => {
+      if (!currentUser) return;
+      
+      try {
+        const users = await getUsers(true);
+        const currentUserData = users.find(user => user.id === currentUser.id);
+        if (currentUserData) {
+          setCompletedGoalsCount(currentUserData.completedGoals);
+        }
+      } catch (error) {
+        console.error("Error fetching completed goals count:", error);
+      }
+    };
+    
+    fetchCompletedGoalsCount();
+    
+    // Set up real-time subscription for completed goals
+    const goalsChannel = supabase
+      .channel('goals_completion_count')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'goals',
+          filter: currentUser ? `user_id=eq.${currentUser.id}` : undefined
+        },
+        () => {
+          fetchCompletedGoalsCount();
+        }
+      )
+      .subscribe();
+      
+    const activitiesChannel = supabase
+      .channel('activities_completion_count')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'activities',
+          filter: currentUser ? `user_id=eq.${currentUser.id}` : undefined
+        },
+        () => {
+          fetchCompletedGoalsCount();
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(goalsChannel);
+      supabase.removeChannel(activitiesChannel);
+    };
+  }, [currentUser]);
 
   return (
     <div className="space-y-6">
@@ -45,6 +107,21 @@ const GoalsPage = () => {
           <PlusCircle className="mr-2 h-4 w-4" />
           Add New Goal
         </Button>
+      </div>
+
+      {/* Display stats at the top including completed goals */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="p-4 flex justify-between items-center">
+            <div>
+              <p className="text-sm text-muted-foreground">Completed Goals</p>
+              <p className="text-2xl font-bold">{completedGoalsCount}</p>
+            </div>
+            <div className="rounded-full p-2 text-green-500 bg-muted/30">
+              <PlusCircle className="h-6 w-6 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>

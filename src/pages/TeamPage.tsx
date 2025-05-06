@@ -8,6 +8,7 @@ import { Users } from "lucide-react";
 import { getUsers } from "../services/api/userService";
 import { User } from "../types";
 import { supabase } from "@/integrations/supabase/client";
+import { TeamInvitation } from "../components/Team/TeamInvitation";
 
 const TeamPage = () => {
   const { users: storeUsers } = useGoalStore();
@@ -103,6 +104,9 @@ const TeamPage = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Team</h1>
       </div>
+      
+      {/* Add the TeamInvitation component */}
+      <TeamInvitation />
       
       <Card>
         <CardHeader className="pb-2">
