@@ -127,12 +127,23 @@ export const TeamInvitation = () => {
     setIsLoading(true);
     try {
       // Find user by email
-      const { data: users, error: userError } = await supabase
+      const { data: userData, error: userError } = await supabase
         .from('profiles')
         .select('id')
         .eq('email', email);
         
-      if (userError || !users || users.length === 0) {
+      if (userError) {
+        console.error('Error finding user:', userError);
+        toast({
+          title: "Error",
+          description: "There was an error finding the user. Email may not exist in our system.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      if (!userData || userData.length === 0) {
         toast({
           title: "User not found",
           description: "Could not find a user with that email address.",
@@ -142,7 +153,7 @@ export const TeamInvitation = () => {
         return;
       }
       
-      const userId = users[0].id;
+      const userId = userData[0].id;
       
       // Check if invitation already exists
       const { data: existingInvitation, error: invitationError } = await supabase
@@ -235,8 +246,10 @@ export const TeamInvitation = () => {
         description: `You have ${status} the invitation.`,
       });
       
-      // Remove the invitation from the list
-      setInvitations(invitations.filter(inv => inv.id !== invitationId));
+      // Remove the invitation from the local state to update UI
+      setInvitations(prevInvitations => 
+        prevInvitations.filter(inv => inv.id !== invitationId)
+      );
       
     } catch (error) {
       console.error(`Error ${status} invitation:`, error);
