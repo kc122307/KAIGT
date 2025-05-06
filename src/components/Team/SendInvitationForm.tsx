@@ -29,7 +29,7 @@ export const SendInvitationForm = () => {
       // Find user by email
       const { data: userData, error: userError } = await supabase
         .from('profiles')
-        .select('id, email')  // Make sure to include email in the select query
+        .select('id')
         .eq('email', email.trim());
         
       if (userError) {
