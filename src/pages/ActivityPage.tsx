@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useGoalStore } from "../store/goalStore";
 import { format, subDays } from "date-fns";
 import { ActivityLog } from "../components/ActivityLog/ActivityLog";
@@ -17,10 +17,78 @@ import { Label } from "@/components/ui/label";
 import { Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Activity } from "../types";
+import { supabase } from "@/integrations/supabase/client";
+import { getUsers } from "../services/api/userService";
 
 const ActivityPage = () => {
   const [timeFilter, setTimeFilter] = useState<string>("all");
-  const { activities, goals } = useGoalStore();
+  const { activities, goals, currentUser } = useGoalStore();
+  const [completedGoalsCount, setCompletedGoalsCount] = useState(0);
+  
+  // Fetch fresh data for completed goals count
+  useEffect(() => {
+    const fetchLatestStats = async () => {
+      if (!currentUser) return;
+      
+      try {
+        // Force refresh to get accurate completed goals count
+        const users = await getUsers(true);
+        const currentUserData = users.find(user => user.id === currentUser.id);
+        if (currentUserData) {
+          setCompletedGoalsCount(currentUserData.completedGoals);
+        }
+      } catch (error) {
+        console.error("Error fetching completed goals count:", error);
+        // Fall back to counting completed goals from the goals array
+        const uniqueCompletedGoalIds = new Set(
+          activities
+            .filter(activity => activity.action_type === 'completed')
+            .map(activity => activity.goal_id)
+        );
+        setCompletedGoalsCount(uniqueCompletedGoalIds.size);
+      }
+    };
+    
+    fetchLatestStats();
+    
+    // Set up real-time subscriptions for goals and activities
+    const goalsChannel = supabase
+      .channel('public:goals_activity_page')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'goals'
+        },
+        (payload) => {
+          console.log('Goals change received in activity page:', payload);
+          fetchLatestStats();
+        }
+      )
+      .subscribe();
+      
+    const activitiesChannel = supabase
+      .channel('public:activities_activity_page')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'activities'
+        },
+        (payload) => {
+          console.log('Activity change received in activity page:', payload);
+          fetchLatestStats();
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(goalsChannel);
+      supabase.removeChannel(activitiesChannel);
+    };
+  }, [activities, currentUser]);
   
   // Filter activities by time
   const getFilteredActivities = () => {
@@ -73,19 +141,11 @@ const ActivityPage = () => {
     return goals.find(goal => goal.id === goalId)?.title || "Unknown Goal";
   };
   
-  // Calculate activity stats - FIX: count unique completed goals
+  // Calculate activity stats
   const totalActivities = activities.length;
   const todayActivities = activities.filter(activity => 
     new Date(activity.timestamp).toDateString() === new Date().toDateString()
   ).length;
-  
-  // Fix for completed goals count - count unique goal IDs that have been completed
-  const uniqueCompletedGoalIds = new Set(
-    activities
-      .filter(activity => activity.action_type === 'completed')
-      .map(activity => activity.goal_id)
-  );
-  const completedGoals = uniqueCompletedGoalIds.size;
   
   return (
     <div className="space-y-6">
@@ -140,7 +200,7 @@ const ActivityPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{completedGoals}</div>
+            <div className="text-2xl font-bold">{completedGoalsCount}</div>
           </CardContent>
         </Card>
       </div>

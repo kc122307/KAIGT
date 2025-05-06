@@ -19,7 +19,8 @@ const TeamPage = () => {
     const fetchLatestUserData = async () => {
       setIsLoading(true);
       try {
-        const latestUsers = await getUsers();
+        // Force refresh to get accurate goal completion data
+        const latestUsers = await getUsers(true);
         console.log("Fetched latest users for team page:", latestUsers);
         setRefreshedUsers(latestUsers);
       } catch (error) {
@@ -51,8 +52,46 @@ const TeamPage = () => {
       )
       .subscribe();
       
+    // Also listen for goals changes to update completed goals count
+    const goalsChannel = supabase
+      .channel('public:goals_team')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'goals'
+        },
+        (payload) => {
+          console.log('Goals change received in team page:', payload);
+          // Refresh data when goals are updated
+          fetchLatestUserData();
+        }
+      )
+      .subscribe();
+      
+    // Listen for activity changes to update streak counts
+    const activitiesChannel = supabase
+      .channel('public:activities_team')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'activities'
+        },
+        (payload) => {
+          console.log('Activity change received in team page:', payload);
+          // Refresh data when activities are updated
+          fetchLatestUserData();
+        }
+      )
+      .subscribe();
+      
     return () => {
       supabase.removeChannel(profilesChannel);
+      supabase.removeChannel(goalsChannel);
+      supabase.removeChannel(activitiesChannel);
     };
   }, [storeUsers]);
   
