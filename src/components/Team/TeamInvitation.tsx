@@ -29,37 +29,49 @@ export const TeamInvitation = () => {
     
     const fetchInvitations = async () => {
       try {
-        const { data, error } = await supabase
+        // First, fetch the pending invitations
+        const { data: invitationsData, error: invitationsError } = await supabase
           .from('team_invitations')
-          .select(`
-            id, 
-            from_user_id, 
-            to_user_id, 
-            status, 
-            created_at,
-            profiles!team_invitations_from_user_id_fkey(name)
-          `)
+          .select('id, from_user_id, to_user_id, status, created_at')
           .eq('to_user_id', currentUser.id)
           .eq('status', 'pending');
           
-        if (error) {
-          console.error('Error fetching invitations:', error);
+        if (invitationsError) {
+          console.error('Error fetching invitations:', invitationsError);
           return;
         }
         
-        if (!data) return;
+        if (!invitationsData || invitationsData.length === 0) {
+          setInvitations([]);
+          return;
+        }
         
-        // Format the invitations data
-        const formattedInvitations = data.map(inv => ({
-          id: inv.id,
-          from_user_id: inv.from_user_id,
-          to_user_id: inv.to_user_id,
-          status: inv.status as 'pending' | 'accepted' | 'rejected' | 'ignored',
-          created_at: inv.created_at,
-          from_user_name: inv.profiles?.name || 'Unknown User'
-        }));
+        // Then, for each invitation, fetch the sender's name
+        const invitationsWithNames = await Promise.all(
+          invitationsData.map(async (invitation) => {
+            // Get sender's profile
+            const { data: profileData, error: profileError } = await supabase
+              .from('profiles')
+              .select('name')
+              .eq('id', invitation.from_user_id)
+              .single();
+              
+            if (profileError) {
+              console.error('Error fetching sender profile:', profileError);
+              return {
+                ...invitation,
+                from_user_name: 'Unknown User'
+              };
+            }
+            
+            return {
+              ...invitation,
+              from_user_name: profileData?.name || 'Unknown User'
+            };
+          })
+        );
         
-        setInvitations(formattedInvitations);
+        setInvitations(invitationsWithNames);
       } catch (error) {
         console.error('Error in fetchInvitations:', error);
       }
