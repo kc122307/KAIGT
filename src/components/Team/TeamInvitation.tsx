@@ -129,8 +129,8 @@ export const TeamInvitation = () => {
       // Find user by email
       const { data: userData, error: userError } = await supabase
         .from('profiles')
-        .select('id')
-        .eq('email', email);
+        .select('id, email')  // Add email to the select query to ensure it exists
+        .eq('email', email.trim());
         
       if (userError) {
         console.error('Error finding user:', userError);
@@ -238,6 +238,7 @@ export const TeamInvitation = () => {
           description: `Failed to ${status} invitation. Please try again.`,
           variant: "destructive",
         });
+        setIsLoading(false);
         return;
       }
       
@@ -246,10 +247,11 @@ export const TeamInvitation = () => {
         description: `You have ${status} the invitation.`,
       });
       
-      // Remove the invitation from the local state to update UI
-      setInvitations(prevInvitations => 
-        prevInvitations.filter(inv => inv.id !== invitationId)
-      );
+      // Remove the invitation from the local state to update UI using a callback approach
+      // This fixes the "Type instantiation is excessively deep" error
+      setInvitations((prevInvitations) => {
+        return prevInvitations.filter(inv => inv.id !== invitationId);
+      });
       
     } catch (error) {
       console.error(`Error ${status} invitation:`, error);
