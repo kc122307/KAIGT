@@ -8,11 +8,13 @@ import { toast } from "@/components/ui/use-toast";
 import { User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
+type InvitationStatus = 'pending' | 'accepted' | 'rejected' | 'ignored';
+
 type Invitation = {
   id: string;
   from_user_id: string;
   to_user_id: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'ignored';
+  status: InvitationStatus;
   created_at: string;
   from_user_name: string;
 };
@@ -60,18 +62,23 @@ export const TeamInvitation = () => {
               console.error('Error fetching sender profile:', profileError);
               return {
                 ...invitation,
-                from_user_name: 'Unknown User'
+                from_user_name: 'Unknown User',
+                // Explicitly cast the status to ensure it matches our type
+                status: invitation.status as InvitationStatus
               };
             }
             
             return {
               ...invitation,
-              from_user_name: profileData?.name || 'Unknown User'
+              from_user_name: profileData?.name || 'Unknown User',
+              // Explicitly cast the status to ensure it matches our type
+              status: invitation.status as InvitationStatus
             };
           })
         );
         
-        setInvitations(invitationsWithNames);
+        // Now we're explicitly setting the typed array
+        setInvitations(invitationsWithNames as Invitation[]);
       } catch (error) {
         console.error('Error in fetchInvitations:', error);
       }
@@ -206,7 +213,7 @@ export const TeamInvitation = () => {
   };
 
   // Handle invitation response (accept, reject, ignore)
-  const respondToInvitation = async (invitationId: string, status: 'accepted' | 'rejected' | 'ignored') => {
+  const respondToInvitation = async (invitationId: string, status: InvitationStatus) => {
     setIsLoading(true);
     try {
       const { error } = await supabase
