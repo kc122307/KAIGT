@@ -89,10 +89,29 @@ const TeamPage = () => {
       )
       .subscribe();
       
+    // Listen for team invitation changes
+    const invitationsChannel = supabase
+      .channel('public:team_invitations')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'team_invitations'
+        },
+        (payload) => {
+          console.log('Team invitation change received:', payload);
+          // Refresh user data when team invitations are updated
+          fetchLatestUserData();
+        }
+      )
+      .subscribe();
+      
     return () => {
       supabase.removeChannel(profilesChannel);
       supabase.removeChannel(goalsChannel);
       supabase.removeChannel(activitiesChannel);
+      supabase.removeChannel(invitationsChannel);
     };
   }, [storeUsers]);
   

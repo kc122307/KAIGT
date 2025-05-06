@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useGoalStore } from "../../store/goalStore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,45 +18,51 @@ type Invitation = {
 };
 
 export const TeamInvitation = () => {
-  const { currentUser, users } = useGoalStore();
+  const { currentUser } = useGoalStore();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
 
   // Fetch invitations when component mounts
-  useState(() => {
+  useEffect(() => {
     if (!currentUser) return;
     
     const fetchInvitations = async () => {
-      const { data, error } = await supabase
-        .from('team_invitations')
-        .select(`
-          id, 
-          from_user_id, 
-          to_user_id, 
-          status, 
-          created_at,
-          profiles!team_invitations_from_user_id_fkey(name)
-        `)
-        .eq('to_user_id', currentUser.id)
-        .eq('status', 'pending');
+      try {
+        const { data, error } = await supabase
+          .from('team_invitations')
+          .select(`
+            id, 
+            from_user_id, 
+            to_user_id, 
+            status, 
+            created_at,
+            profiles!team_invitations_from_user_id_fkey(name)
+          `)
+          .eq('to_user_id', currentUser.id)
+          .eq('status', 'pending');
+          
+        if (error) {
+          console.error('Error fetching invitations:', error);
+          return;
+        }
         
-      if (error) {
-        console.error('Error fetching invitations:', error);
-        return;
+        if (!data) return;
+        
+        // Format the invitations data
+        const formattedInvitations = data.map(inv => ({
+          id: inv.id,
+          from_user_id: inv.from_user_id,
+          to_user_id: inv.to_user_id,
+          status: inv.status as 'pending' | 'accepted' | 'rejected' | 'ignored',
+          created_at: inv.created_at,
+          from_user_name: inv.profiles?.name || 'Unknown User'
+        }));
+        
+        setInvitations(formattedInvitations);
+      } catch (error) {
+        console.error('Error in fetchInvitations:', error);
       }
-      
-      // Format the invitations data
-      const formattedInvitations = data.map(inv => ({
-        id: inv.id,
-        from_user_id: inv.from_user_id,
-        to_user_id: inv.to_user_id,
-        status: inv.status,
-        created_at: inv.created_at,
-        from_user_name: inv.profiles?.name || 'Unknown User'
-      }));
-      
-      setInvitations(formattedInvitations);
     };
     
     fetchInvitations();
@@ -102,54 +108,69 @@ export const TeamInvitation = () => {
     setIsLoading(true);
     try {
       // Find user by email
-      const { data: userData, error: userError } = await supabase
-        .from('auth.users')
+      const { data: users, error: userError } = await supabase
+        .from('profiles')
         .select('id')
-        .eq('email', email)
-        .single();
+        .eq('email', email);
         
-      if (userError) {
+      if (userError || !users || users.length === 0) {
         toast({
           title: "User not found",
           description: "Could not find a user with that email address.",
           variant: "destructive",
         });
+        setIsLoading(false);
         return;
       }
       
+      const userId = users[0].id;
+      
       // Check if invitation already exists
-      const { data: existingInvitation } = await supabase
+      const { data: existingInvitation, error: invitationError } = await supabase
         .from('team_invitations')
         .select('id')
         .eq('from_user_id', currentUser.id)
-        .eq('to_user_id', userData.id)
-        .eq('status', 'pending')
-        .single();
+        .eq('to_user_id', userId)
+        .eq('status', 'pending');
         
-      if (existingInvitation) {
+      if (invitationError) {
+        console.error('Error checking existing invitation:', invitationError);
+        toast({
+          title: "Error",
+          description: "There was an error checking for existing invitations.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+        
+      if (existingInvitation && existingInvitation.length > 0) {
         toast({
           title: "Invitation already sent",
           description: "You have already sent an invitation to this user.",
           variant: "destructive",
         });
+        setIsLoading(false);
         return;
       }
       
       // Create new invitation
-      const { error: inviteError } = await supabase
+      const { error: insertError } = await supabase
         .from('team_invitations')
         .insert({
           from_user_id: currentUser.id,
-          to_user_id: userData.id,
+          to_user_id: userId,
           status: 'pending'
         });
         
-      if (inviteError) {
+      if (insertError) {
+        console.error('Error sending invitation:', insertError);
         toast({
           title: "Failed to send invitation",
           description: "There was an error sending the invitation. Please try again.",
           variant: "destructive",
         });
+        setIsLoading(false);
         return;
       }
       
