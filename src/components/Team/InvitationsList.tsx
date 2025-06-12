@@ -1,9 +1,9 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useGoalStore } from "../../store/goalStore";
+import { InvitationCard } from "./InvitationCard";
 import { InvitationListItem, Invitation } from "./InvitationListItem";
 
 export const InvitationsList = () => {
@@ -52,16 +52,14 @@ export const InvitationsList = () => {
               return {
                 ...invitation,
                 from_user_name: 'Unknown User',
-                // Explicitly cast the status to ensure it matches our type
-                status: invitation.status as 'pending' | 'accepted' | 'rejected' | 'ignored'
+                status: invitation.status as InvitationStatus
               };
             }
             
             return {
               ...invitation,
               from_user_name: profileData?.name || 'Unknown User',
-              // Explicitly cast the status to ensure it matches our type
-              status: invitation.status as 'pending' | 'accepted' | 'rejected' | 'ignored'
+              status: invitation.status as InvitationStatus
             };
           })
         );
@@ -114,22 +112,19 @@ export const InvitationsList = () => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Pending Invitations</CardTitle>
-        <CardDescription>Respond to team invitations</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ul className="space-y-3">
-          {invitations.map((invitation) => (
-            <InvitationListItem 
-              key={invitation.id} 
-              invitation={invitation} 
-              onInvitationResponded={handleInvitationResponded}
-            />
-          ))}
-        </ul>
-      </CardContent>
-    </Card>
+    <InvitationCard 
+      title="Pending Invitations" 
+      description="Respond to team invitations"
+    >
+      <ul className="space-y-3">
+        {invitations.map((invitation) => (
+          <InvitationListItem 
+            key={invitation.id} 
+            invitation={invitation} 
+            onInvitationResponded={handleInvitationResponded}
+          />
+        ))}
+      </ul>
+    </InvitationCard>
   );
 };
