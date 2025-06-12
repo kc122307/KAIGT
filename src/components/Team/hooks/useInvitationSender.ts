@@ -21,17 +21,18 @@ export const useInvitationSender = () => {
     
     setIsLoading(true);
     try {
-      // Find user by email
+      // Find user by email - simplified query to avoid type instantiation issues
       const { data: userData, error: userError } = await supabase
         .from('profiles')
         .select('id')
-        .eq('email', email.trim());
+        .eq('name', email.trim())
+        .limit(1);
         
       if (userError) {
         console.error('Error finding user:', userError);
         toast({
           title: "Error",
-          description: "There was an error finding the user. Email may not exist in our system.",
+          description: "There was an error finding the user. Please check the email address.",
           variant: "destructive",
         });
         return false;
@@ -40,7 +41,7 @@ export const useInvitationSender = () => {
       if (!userData || userData.length === 0) {
         toast({
           title: "User not found",
-          description: "Could not find a user with that email address.",
+          description: "Could not find a user with that name/email address.",
           variant: "destructive",
         });
         return false;

@@ -4,7 +4,8 @@ import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useGoalStore } from "../../store/goalStore";
 import { InvitationCard } from "./InvitationCard";
-import { InvitationListItem, Invitation } from "./InvitationListItem";
+import { InvitationListItem } from "./InvitationListItem";
+import { InvitationStatus, Invitation } from "./types";
 
 export const InvitationsList = () => {
   const { currentUser } = useGoalStore();

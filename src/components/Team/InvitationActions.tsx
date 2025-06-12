@@ -1,7 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-
-type InvitationStatus = 'pending' | 'accepted' | 'rejected' | 'ignored';
+import { InvitationStatus } from "./types";
 
 interface InvitationActionsProps {
   onRespond: (status: InvitationStatus) => void;

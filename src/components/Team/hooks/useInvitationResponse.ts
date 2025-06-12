@@ -2,8 +2,7 @@
 import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-
-type InvitationStatus = 'pending' | 'accepted' | 'rejected' | 'ignored';
+import { InvitationStatus } from "../types";
 
 export const useInvitationResponse = (onSuccess: (invitationId: string) => void) => {
   const [isLoading, setIsLoading] = useState(false);
