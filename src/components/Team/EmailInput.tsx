@@ -7,7 +7,7 @@ interface EmailInputProps {
   placeholder?: string;
 }
 
-export const EmailInput = ({ value, onChange, placeholder = "Enter email address" }: EmailInputProps) => {
+export const EmailInput = ({ value, onChange, placeholder = "Enter email address or username" }: EmailInputProps) => {
   return (
     <Input 
       placeholder={placeholder}

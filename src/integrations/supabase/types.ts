@@ -159,22 +159,31 @@ export type Database = {
           created_at: string
           from_user_id: string
           id: string
+          invitation_token: string | null
+          invitation_type: string
           status: string
-          to_user_id: string
+          to_email: string | null
+          to_user_id: string | null
         }
         Insert: {
           created_at?: string
           from_user_id: string
           id?: string
+          invitation_token?: string | null
+          invitation_type?: string
           status?: string
-          to_user_id: string
+          to_email?: string | null
+          to_user_id?: string | null
         }
         Update: {
           created_at?: string
           from_user_id?: string
           id?: string
+          invitation_token?: string | null
+          invitation_type?: string
           status?: string
-          to_user_id?: string
+          to_email?: string | null
+          to_user_id?: string | null
         }
         Relationships: []
       }

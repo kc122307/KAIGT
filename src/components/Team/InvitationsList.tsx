@@ -12,17 +12,16 @@ export const InvitationsList = () => {
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch invitations when component mounts
   useEffect(() => {
     if (!currentUser) return;
     
     const fetchInvitations = async () => {
       setIsLoading(true);
       try {
-        // First, fetch the pending invitations
+        // Fetch pending invitations for registered users
         const { data: invitationsData, error: invitationsError } = await supabase
           .from('team_invitations')
-          .select('id, from_user_id, to_user_id, status, created_at')
+          .select('id, from_user_id, to_user_id, to_email, status, invitation_type, invitation_token, created_at')
           .eq('to_user_id', currentUser.id)
           .eq('status', 'pending');
           
@@ -38,25 +37,15 @@ export const InvitationsList = () => {
           return;
         }
         
-        // Then, for each invitation, fetch the sender's name
+        // Fetch sender names for each invitation
         const invitationsWithNames = await Promise.all(
           invitationsData.map(async (invitation) => {
-            // Get sender's profile
             const { data: profileData, error: profileError } = await supabase
               .from('profiles')
               .select('name')
               .eq('id', invitation.from_user_id)
               .single();
               
-            if (profileError) {
-              console.error('Error fetching sender profile:', profileError);
-              return {
-                ...invitation,
-                from_user_name: 'Unknown User',
-                status: invitation.status as InvitationStatus
-              };
-            }
-            
             return {
               ...invitation,
               from_user_name: profileData?.name || 'Unknown User',
@@ -96,12 +85,31 @@ export const InvitationsList = () => {
       )
       .subscribe();
       
+    // Also listen for notifications
+    const notificationsChannel = supabase
+      .channel('notifications_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${currentUser.id}`
+        },
+        (payload) => {
+          if (payload.new.type === 'collaboration') {
+            fetchInvitations();
+          }
+        }
+      )
+      .subscribe();
+      
     return () => {
       supabase.removeChannel(invitationsChannel);
+      supabase.removeChannel(notificationsChannel);
     };
   }, [currentUser]);
 
-  // Handle when an invitation has been responded to
   const handleInvitationResponded = (invitationId: string) => {
     setInvitations(prevInvitations => 
       prevInvitations.filter(inv => inv.id !== invitationId)
