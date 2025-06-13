@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { LoginFormFields } from './LoginFormFields';
 import { AuthContainer } from './AuthContainer';
 import { useAuth } from '../../hooks/useAuth';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useGoalStore } from '../../store/goalStore';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -25,10 +25,18 @@ export const LoginForm = () => {
     }
   }, [isAuthenticated, navigate]);
   
-  // If already authenticated, redirect
+  // If already authenticated, show loading while redirecting
   if (isAuthenticated) {
-    // Let the effect handle the redirect to last path
-    return null;
+    return (
+      <AuthContainer>
+        <div className="flex items-center justify-center p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Redirecting...</p>
+          </div>
+        </div>
+      </AuthContainer>
+    );
   }
   
   return (
@@ -73,17 +81,6 @@ export const LoginForm = () => {
                 />
               </TabsContent>
             </Tabs>
-            
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-muted" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">
-                  Or continue with
-                </span>
-              </div>
-            </div>
             
             <SocialLogin />
           </CardContent>

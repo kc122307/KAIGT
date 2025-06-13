@@ -38,6 +38,7 @@ export const register = async (name: string, email: string, password: string): P
     email: email,
     password: password,
     options: {
+      emailRedirectTo: `${window.location.origin}/`,
       data: {
         name: name,
       }
@@ -127,10 +128,8 @@ export const logout = async (): Promise<void> => {
   }
 };
 
-// Get all users
+// Get all users with accurate goal counts
 export const getUsers = async (forceRefresh = false): Promise<User[]> => {
-  const { data: { session } } = await supabase.auth.getSession();
-  
   // Fetch users from profiles table
   const { data: profiles, error: profilesError } = await supabase
     .from('profiles')
@@ -141,129 +140,85 @@ export const getUsers = async (forceRefresh = false): Promise<User[]> => {
     throw profilesError;
   }
 
-  // If we need fresh counts, we need to calculate them for each user
-  if (forceRefresh) {
-    // For each profile, fetch their completed goal count and calculate streak
-    const usersWithStats = await Promise.all(profiles.map(async (profile) => {
-      try {
-        // Get completed goals
-        const { data: completedGoals, error: goalsError } = await supabase
-          .from('goals')
-          .select('*')
-          .eq('user_id', profile.id)
-          .eq('status', 'Completed');
-          
-        if (goalsError) throw goalsError;
+  // Always calculate fresh counts for accurate data
+  const usersWithStats = await Promise.all(profiles.map(async (profile) => {
+    try {
+      // Get completed goals count
+      const { data: completedGoals, error: goalsError } = await supabase
+        .from('goals')
+        .select('id')
+        .eq('user_id', profile.id)
+        .eq('status', 'Completed');
         
-        // Get all activity to calculate streak
-        const { data: activities, error: activitiesError } = await supabase
-          .from('activities')
-          .select('*')
-          .eq('user_id', profile.id)
-          .order('timestamp', { ascending: false });
-          
-        if (activitiesError) throw activitiesError;
+      if (goalsError) {
+        console.error(`Error fetching goals for user ${profile.id}:`, goalsError);
+      }
+      
+      // Get all activity to calculate streak
+      const { data: activities, error: activitiesError } = await supabase
+        .from('activities')
+        .select('timestamp')
+        .eq('user_id', profile.id)
+        .order('timestamp', { ascending: false });
         
-        // Calculate current streak based on daily activities
-        let streak = 0;
-        let currentDate = new Date();
-        currentDate.setHours(0, 0, 0, 0); // Normalize to start of day
+      if (activitiesError) {
+        console.error(`Error fetching activities for user ${profile.id}:`, activitiesError);
+      }
+      
+      // Calculate current streak based on daily activities
+      let streak = 0;
+      if (activities && activities.length > 0) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
         
-        // Check if there's any activity
-        if (activities && activities.length > 0) {
-          // Get the date of the most recent activity
-          const mostRecentActivity = new Date(activities[0].timestamp);
-          mostRecentActivity.setHours(0, 0, 0, 0); // Normalize to start of day
-          
-          // Compare with today's date
-          const isActiveToday = mostRecentActivity.getTime() === currentDate.getTime();
-          
-          if (isActiveToday) {
-            streak = 1; // Always start with 1 for today's activity
-            
-            // Check consecutive days before today
-            let prevDate = new Date(currentDate);
-            prevDate.setDate(prevDate.getDate() - 1); // Start checking from yesterday
-            
-            for (let i = 1; i < activities.length; i++) {
-              const activityDate = new Date(activities[i].timestamp);
-              activityDate.setHours(0, 0, 0, 0); // Normalize to start of day
-              
-              // If this activity is from the previous consecutive day
-              if (activityDate.getTime() === prevDate.getTime()) {
-                streak++;
-                // Move to the day before
-                prevDate.setDate(prevDate.getDate() - 1);
-              } else if (activityDate.getTime() < prevDate.getTime()) {
-                // If we skipped a day, stop counting
-                break;
-              }
-            }
+        // Group activities by date
+        const activityDates = new Set();
+        activities.forEach(activity => {
+          const activityDate = new Date(activity.timestamp);
+          activityDate.setHours(0, 0, 0, 0);
+          activityDates.add(activityDate.getTime());
+        });
+        
+        // Convert to sorted array of dates
+        const sortedDates = Array.from(activityDates).sort((a, b) => b - a);
+        
+        // Calculate streak
+        let currentDate = today.getTime();
+        for (const dateTime of sortedDates) {
+          if (dateTime === currentDate || dateTime === currentDate - 86400000) { // Today or yesterday
+            streak++;
+            currentDate = dateTime - 86400000; // Move to previous day
           } else {
-            // If there's no activity today, but there was yesterday, count the streak without today
-            const yesterday = new Date(currentDate);
-            yesterday.setDate(yesterday.getDate() - 1);
-            yesterday.setHours(0, 0, 0, 0);
-            
-            if (mostRecentActivity.getTime() === yesterday.getTime()) {
-              streak = 1; // Start with 1 for yesterday
-              
-              let prevDate = new Date(yesterday);
-              prevDate.setDate(prevDate.getDate() - 1); // Start from the day before yesterday
-              
-              for (let i = 1; i < activities.length; i++) {
-                const activityDate = new Date(activities[i].timestamp);
-                activityDate.setHours(0, 0, 0, 0);
-                
-                if (activityDate.getTime() === prevDate.getTime()) {
-                  streak++;
-                  prevDate.setDate(prevDate.getDate() - 1);
-                } else if (activityDate.getTime() < prevDate.getTime()) {
-                  break;
-                }
-              }
-            }
+            break; // Gap in streak
           }
         }
-        
-        // Log the streak calculation for debugging
-        console.log(`User ${profile.name} has streak: ${streak}`);
-        
-        return {
-          id: profile.id,
-          name: profile.name,
-          email: '', // Default empty email as it's optional in our User type
-          avatar: profile.avatar || '',
-          completedGoals: completedGoals?.length || 0,
-          streakCount: streak,
-          lastActive: profile.updated_at ? new Date(profile.updated_at) : null
-        };
-      } catch (error) {
-        console.error(`Error fetching data for user ${profile.id}:`, error);
-        // Return user with default values if we can't get their stats
-        return {
-          id: profile.id,
-          name: profile.name,
-          email: '', // Default empty email
-          avatar: profile.avatar || '',
-          completedGoals: 0,
-          streakCount: 0,
-          lastActive: profile.updated_at ? new Date(profile.updated_at) : null
-        };
       }
-    }));
-    
-    return usersWithStats;
-  }
-
-  // Convert profiles to User type
-  return profiles.map(profile => ({
-    id: profile.id,
-    name: profile.name,
-    email: '', // Default empty email as it's optional in our User type
-    avatar: profile.avatar || '',
-    completedGoals: profile.completed_goals || 0,
-    streakCount: profile.streak_count || 0,
-    lastActive: profile.updated_at ? new Date(profile.updated_at) : null
+      
+      const completedGoalsCount = completedGoals?.length || 0;
+      
+      return {
+        id: profile.id,
+        name: profile.name,
+        email: '', // Default empty email
+        avatar: profile.avatar || '',
+        completedGoals: completedGoalsCount,
+        streakCount: streak,
+        lastActive: profile.updated_at ? new Date(profile.updated_at) : null
+      };
+    } catch (error) {
+      console.error(`Error fetching data for user ${profile.id}:`, error);
+      // Return user with default values if we can't get their stats
+      return {
+        id: profile.id,
+        name: profile.name,
+        email: '',
+        avatar: profile.avatar || '',
+        completedGoals: 0,
+        streakCount: 0,
+        lastActive: profile.updated_at ? new Date(profile.updated_at) : null
+      };
+    }
   }));
+  
+  return usersWithStats;
 };

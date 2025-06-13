@@ -1,8 +1,64 @@
 
 import { Button } from "@/components/ui/button";
 import { Github } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/use-toast";
 
 export const SocialLogin = () => {
+  const handleGoogleLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`
+        }
+      });
+      
+      if (error) {
+        console.error('Google login error:', error);
+        toast({
+          title: "Login failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
+      toast({
+        title: "Login failed",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleGithubLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+          redirectTo: `${window.location.origin}/`
+        }
+      });
+      
+      if (error) {
+        console.error('GitHub login error:', error);
+        toast({
+          title: "Login failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('GitHub login error:', error);
+      toast({
+        title: "Login failed",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <>
       <div className="relative my-4">
@@ -15,7 +71,7 @@ export const SocialLogin = () => {
       </div>
       
       <div className="grid grid-cols-2 gap-4">
-        <Button variant="outline" className="gap-2" type="button">
+        <Button variant="outline" className="gap-2" type="button" onClick={handleGoogleLogin}>
           <svg viewBox="0 0 24 24" className="h-5 w-5">
             <path
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -36,7 +92,7 @@ export const SocialLogin = () => {
           </svg>
           Google
         </Button>
-        <Button variant="outline" className="gap-2" type="button">
+        <Button variant="outline" className="gap-2" type="button" onClick={handleGithubLogin}>
           <Github className="h-5 w-5" />
           GitHub
         </Button>

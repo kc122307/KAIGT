@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useGoalStore } from "../store/goalStore";
 import { toast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 type AuthType = "login" | "register";
 
@@ -49,12 +48,14 @@ export const useAuth = (authType: AuthType) => {
         // Show success toast with additional information about email verification
         toast({
           title: "Registration successful!",
-          description: "Welcome to GoalTracker! You can now login with your credentials.",
+          description: "Please check your email to verify your account before logging in.",
           duration: 5000,
         });
         
-        // For registration, navigate to the login page
-        navigate('/login', { replace: true });
+        // Clear the form
+        setName("");
+        setEmail("");
+        setPassword("");
       }
     } catch (error) {
       console.error(`${authType} failed:`, error);
@@ -67,11 +68,13 @@ export const useAuth = (authType: AuthType) => {
       if (errorMessage.includes("Email not confirmed")) {
         errorMessage = "Please check your email and confirm your account before logging in.";
       } else if (errorMessage.includes("Invalid login credentials")) {
-        errorMessage = "Invalid email or password.";
-      } else if (errorMessage.includes("User already exists")) {
+        errorMessage = "Invalid email or password. Please check your credentials and try again.";
+      } else if (errorMessage.includes("User already exists") || errorMessage.includes("already registered")) {
         errorMessage = "This email is already registered. Try logging in instead.";
       } else if (errorMessage.includes("User profile not found")) {
         errorMessage = "Registration failed. Please try again later.";
+      } else if (errorMessage.includes("Password should be at least")) {
+        errorMessage = "Password should be at least 6 characters long.";
       }
       
       // Show detailed error toast
