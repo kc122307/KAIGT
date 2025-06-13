@@ -54,6 +54,7 @@ export const SocialLogin = () => {
           variant: "destructive",
         });
       }
+      // If no error, the browser will redirect to GitHub
     } catch (error) {
       console.error('GitHub login error:', error);
       toast({
