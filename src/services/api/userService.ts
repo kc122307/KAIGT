@@ -172,22 +172,23 @@ export const getUsers = async (forceRefresh = false): Promise<User[]> => {
         today.setHours(0, 0, 0, 0);
         
         // Group activities by date
-        const activityDates = new Set();
+        const activityDates = new Set<number>();
         activities.forEach(activity => {
           const activityDate = new Date(activity.timestamp);
           activityDate.setHours(0, 0, 0, 0);
           activityDates.add(activityDate.getTime());
         });
         
-        // Convert to sorted array of dates
+        // Convert to sorted array of dates (timestamps as numbers)
         const sortedDates = Array.from(activityDates).sort((a, b) => b - a);
         
         // Calculate streak
         let currentDate = today.getTime();
         for (const dateTime of sortedDates) {
-          if (dateTime === currentDate || dateTime === currentDate - 86400000) { // Today or yesterday
+          const previousDay = currentDate - 86400000; // 24 hours in milliseconds
+          if (dateTime === currentDate || dateTime === previousDay) {
             streak++;
-            currentDate = dateTime - 86400000; // Move to previous day
+            currentDate = previousDay;
           } else {
             break; // Gap in streak
           }
