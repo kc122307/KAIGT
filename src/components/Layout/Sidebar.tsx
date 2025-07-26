@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { cn } from "@/lib/utils";
@@ -88,7 +87,7 @@ export const Sidebar = () => {
         <Link to="/settings" className="block rounded-md p-2 hover:bg-gray-200 dark:hover:bg-gray-700">
           <div className="flex items-center space-x-2">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={currentUser?.avatar || ""} alt={currentUser?.name || "Avatar"} />
+              <AvatarImage src={currentUser?.avatar_url || ""} alt={currentUser?.name || "Avatar"} />
               <AvatarFallback>{currentUser?.name?.charAt(0) || "GT"}</AvatarFallback>
             </Avatar>
             <div className="space-y-0.5">
@@ -137,7 +136,7 @@ export const Sidebar = () => {
             <Link to="/settings" className="block rounded-md p-2 hover:bg-gray-200 dark:hover:bg-gray-700">
               <div className="flex items-center space-x-2">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={currentUser?.avatar || ""} alt={currentUser?.name || "Avatar"} />
+                  <AvatarImage src={currentUser?.avatar_url || ""} alt={currentUser?.name || "Avatar"} />
                   <AvatarFallback>{currentUser?.name?.charAt(0) || "GT"}</AvatarFallback>
                 </Avatar>
                 <div className="space-y-0.5">
