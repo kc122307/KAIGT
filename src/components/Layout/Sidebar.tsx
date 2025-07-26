@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from "react-router-dom";
 import { useGoalStore } from "../../store/goalStore";
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,8 @@ import {
   Bell,
   Activity,
   Trophy,
-  Users
+  Users,
+  Brain
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +35,7 @@ export const Sidebar = ({ open }: SidebarProps) => {
     { title: 'Notifications', icon: <Bell className="h-5 w-5" />, path: '/notifications' },
     { title: 'Leaderboard', icon: <Trophy className="h-5 w-5" />, path: '/leaderboard' },
     { title: 'Team', icon: <Users className="h-5 w-5" />, path: '/team' },
+    { title: 'AI Assistant', icon: <Brain className="h-5 w-5" />, path: '/ai' },
   ];
   
   const handleLogout = () => {

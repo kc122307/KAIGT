@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,6 +22,7 @@ import TasksPage from "./pages/TasksPage";
 import ProgressPage from "./pages/ProgressPage";
 import SettingsPage from "./pages/SettingsPage";
 import TeamPage from "./pages/TeamPage";
+import AIPage from "./pages/AIPage";
 
 // Set up QueryClient
 const queryClient = new QueryClient({
@@ -96,6 +96,7 @@ const App = () => (
                 <Route path="/leaderboard" element={<LeaderboardPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/team" element={<TeamPage />} />
+                <Route path="/ai" element={<AIPage />} />
                 
                 {/* Placeholder routes - redirect to root for now */}
                 <Route path="/teams" element={<Navigate to="/team" replace />} />
