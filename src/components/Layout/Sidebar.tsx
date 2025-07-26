@@ -1,174 +1,106 @@
-import { useState } from 'react';
-import { useLocation, Link } from 'react-router-dom';
-import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+
+import { Link, useLocation } from "react-router-dom";
+import { useGoalStore } from "../../store/goalStore";
 import { Button } from "@/components/ui/button";
-import {
-  Menu,
-  Home,
-  LayoutDashboard,
-  Target,
-  CheckSquare,
-  TrendingUp,
+import { Separator } from "@/components/ui/separator";
+import { 
+  Home, 
+  CheckSquare, 
+  ListTodo, 
+  LineChart, 
+  User, 
+  Settings, 
+  LogOut,
+  Bell,
   Activity,
   Trophy,
-  Users,
-  Settings,
-  Bell,
-  Bot
-} from 'lucide-react';
-import { useGoalStore } from '../../store/goalStore';
+  Users
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export const Sidebar = () => {
+interface SidebarProps {
+  open: boolean;
+}
+
+export const Sidebar = ({ open }: SidebarProps) => {
+  const { logout, currentUser } = useGoalStore();
   const location = useLocation();
-  const { currentUser } = useGoalStore();
-
-  const menuItems = [
-    { 
-      href: '/goals', 
-      icon: Target, 
-      label: 'Goals',
-      description: 'Manage your goals'
-    },
-    { 
-      href: '/tasks', 
-      icon: CheckSquare, 
-      label: 'Tasks',
-      description: 'Track your tasks'
-    },
-    { 
-      href: '/progress', 
-      icon: TrendingUp, 
-      label: 'Progress',
-      description: 'View your progress'
-    },
-    { 
-      href: '/activity', 
-      icon: Activity, 
-      label: 'Activity',
-      description: 'Recent activity'
-    },
-    { 
-      href: '/ai', 
-      icon: Bot, 
-      label: 'AI Assistant',
-      description: 'AI-powered coaching'
-    },
-    { 
-      href: '/leaderboard', 
-      icon: Trophy, 
-      label: 'Leaderboard',
-      description: 'Community rankings'
-    },
-    { 
-      href: '/team', 
-      icon: Users, 
-      label: 'Team',
-      description: 'Collaborate with others'
-    },
+  
+  const navItems = [
+    { title: 'Dashboard', icon: <Home className="h-5 w-5" />, path: '/' },
+    { title: 'Goals', icon: <CheckSquare className="h-5 w-5" />, path: '/goals' },
+    { title: 'Tasks', icon: <ListTodo className="h-5 w-5" />, path: '/tasks' },
+    { title: 'Progress', icon: <LineChart className="h-5 w-5" />, path: '/progress' },
+    { title: 'Activity', icon: <Activity className="h-5 w-5" />, path: '/activity' },
+    { title: 'Notifications', icon: <Bell className="h-5 w-5" />, path: '/notifications' },
+    { title: 'Leaderboard', icon: <Trophy className="h-5 w-5" />, path: '/leaderboard' },
+    { title: 'Team', icon: <Users className="h-5 w-5" />, path: '/team' },
   ];
-
+  
+  const handleLogout = () => {
+    logout().catch(console.error);
+  };
+  
   return (
-    <div className="hidden border-r bg-gray-100/40 dark:bg-gray-800/40 h-screen md:flex md:flex-col md:w-60">
-      <div className="flex-1 space-y-2 p-4 pt-6">
-        <Link to="/dashboard" className="flex items-center gap-2 text-lg font-semibold">
-          <LayoutDashboard className="h-6 w-6" />
-          <span>GoalTracker</span>
-        </Link>
-        <Link to="/settings" className="block rounded-md p-2 hover:bg-gray-200 dark:hover:bg-gray-700">
-          <div className="flex items-center space-x-2">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={currentUser?.avatar_url || ""} alt={currentUser?.name || "Avatar"} />
-              <AvatarFallback>{currentUser?.name?.charAt(0) || "GT"}</AvatarFallback>
-            </Avatar>
-            <div className="space-y-0.5">
-              <p className="text-sm font-medium leading-none">{currentUser?.name || "Guest"}</p>
-              <p className="text-xs text-muted-foreground">
-                {currentUser?.email || "No email"}
-              </p>
-            </div>
+    <div className="flex flex-col h-full bg-background border-r p-4">
+      {/* Profile section */}
+      {currentUser && (
+        <div className="flex items-center gap-3 mb-6 pb-4 border-b">
+          <div className="h-10 w-10 rounded-full overflow-hidden bg-muted">
+            <img 
+              src={currentUser.avatar} 
+              alt={currentUser.name}
+              className="h-full w-full object-cover"
+            />
           </div>
-        </Link>
-        <div className="pb-4">
-          <div className="space-y-1">
-            {menuItems.map((item) => (
-              <Link
-                key={item.href}
-                to={item.href}
-                className={cn(
-                  "group flex items-center rounded-md px-2 py-1.5 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700",
-                  location.pathname === item.href
-                    ? "bg-gray-200 dark:bg-gray-700"
-                    : "text-gray-900 dark:text-gray-50"
-                )}
-              >
-                <item.icon className="mr-2 h-4 w-4" />
-                <span>{item.label}</span>
-              </Link>
-            ))}
+          <div>
+            <div className="font-medium">{currentUser.name}</div>
+            <div className="text-xs text-muted-foreground">
+              {currentUser.completedGoals} goals completed
+            </div>
           </div>
         </div>
+      )}
+      
+      {/* Navigation */}
+      <div className="space-y-1 flex-1">
+        {navItems.map(item => (
+          <Link key={item.path} to={item.path}>
+            <Button
+              variant={location.pathname === item.path ? "secondary" : "ghost"}
+              className={cn("w-full justify-start", { 
+                'bg-secondary': location.pathname === item.path 
+              })}
+            >
+              {item.icon}
+              <span className="ml-2">{item.title}</span>
+            </Button>
+          </Link>
+        ))}
       </div>
-      <Sheet>
-        <SheetTrigger asChild>
-          <Button variant="ghost" size="sm" className="absolute bottom-4 left-4 md:hidden">
-            <Menu className="h-4 w-4 mr-2" />
-            Menu
+      
+      <Separator className="my-4" />
+      
+      {/* Settings and Logout */}
+      <div className="space-y-1">
+        <Link to="/settings">
+          <Button
+            variant={location.pathname === '/settings' ? "secondary" : "ghost"}
+            className="w-full justify-start"
+          >
+            <Settings className="h-5 w-5 mr-2" />
+            Settings
           </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-60">
-          <SheetHeader className="text-left">
-            <SheetTitle>Menu</SheetTitle>
-            <SheetDescription>
-              Manage your account preferences, set profile details and more.
-            </SheetDescription>
-          </SheetHeader>
-          <div className="flex-1 space-y-2 p-4 pt-6">
-            <Link to="/settings" className="block rounded-md p-2 hover:bg-gray-200 dark:hover:bg-gray-700">
-              <div className="flex items-center space-x-2">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={currentUser?.avatar_url || ""} alt={currentUser?.name || "Avatar"} />
-                  <AvatarFallback>{currentUser?.name?.charAt(0) || "GT"}</AvatarFallback>
-                </Avatar>
-                <div className="space-y-0.5">
-                  <p className="text-sm font-medium leading-none">{currentUser?.name || "Guest"}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {currentUser?.email || "No email"}
-                  </p>
-                </div>
-              </div>
-            </Link>
-            <div className="pb-4">
-              <div className="space-y-1">
-                {menuItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    to={item.href}
-                    className={cn(
-                      "group flex items-center rounded-md px-2 py-1.5 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700",
-                      location.pathname === item.href
-                        ? "bg-gray-200 dark:bg-gray-700"
-                        : "text-gray-900 dark:text-gray-50"
-                    )}
-                  >
-                    <item.icon className="mr-2 h-4 w-4" />
-                    <span>{item.label}</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
+        </Link>
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+          onClick={handleLogout}
+        >
+          <LogOut className="h-5 w-5 mr-2" />
+          Logout
+        </Button>
+      </div>
     </div>
   );
 };
