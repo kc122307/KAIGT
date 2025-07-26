@@ -1,13 +1,10 @@
 
 import { useState } from "react";
+import { Outlet } from "react-router-dom";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
 
-interface AppLayoutProps {
-  children: React.ReactNode;
-}
-
-export const AppLayout = ({ children }: AppLayoutProps) => {
+export const AppLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
   const toggleSidebar = () => {
@@ -26,7 +23,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
           transform transition-transform duration-300 ease-in-out
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}>
-          <Sidebar />
+          <Sidebar open={sidebarOpen} />
         </div>
         
         {/* Overlay when sidebar is open on mobile */}
@@ -40,7 +37,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
         
         {/* Main content area that doesn't get covered */}
         <main className={`flex-1 py-4 px-4 lg:px-8 w-full transition-all duration-300 ${sidebarOpen ? 'lg:ml-0' : 'lg:ml-0'}`}>
-          {children}
+          <Outlet />
         </main>
       </div>
     </div>

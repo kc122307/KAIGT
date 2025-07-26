@@ -24,7 +24,7 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
+      <ThemeProvider storageKey="goaltracker-theme">
         <Router>
           <Routes>
             <Route path="/" element={<Index />} />
