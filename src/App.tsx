@@ -1,4 +1,5 @@
 
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,7 +7,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { AppLayout } from "./components/Layout/AppLayout";
-import { AuthRoute } from "./components/Auth/AuthRoute";
 import { LoginForm } from "./components/Auth/LoginForm";
 import { useEffect, useState } from "react";
 import { useGoalStore } from "./store/goalStore";
@@ -86,8 +86,8 @@ const App = () => (
               {/* Auth Routes */}
               <Route path="/login" element={<LoginForm />} />
               
-              {/* Protected Routes */}
-              <Route element={<AuthRoute><AppLayout /></AuthRoute>}>
+              {/* Public Routes - No longer protected */}
+              <Route element={<AppLayout />}>
                 <Route path="/" element={<Index />} />
                 <Route path="/goals" element={<GoalsPage />} />
                 <Route path="/tasks" element={<TasksPage />} />
