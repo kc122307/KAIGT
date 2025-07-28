@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -70,7 +69,9 @@ export const GoalSuggestions = () => {
         description: suggestion.description,
         deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
         category: suggestion.category as GoalCategory,
-        status: 'Pending'
+        status: 'Pending',
+        progress: 0,
+        is_public: true
       });
       
       toast({
