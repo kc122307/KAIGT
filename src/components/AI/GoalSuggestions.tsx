@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Sparkles, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGoalStore } from "@/store/goalStore";
+import { GoalCategory } from "@/types";
 
 interface GoalSuggestion {
   title: string;
@@ -67,10 +68,10 @@ export const GoalSuggestions = () => {
       await addGoal({
         title: suggestion.title,
         description: suggestion.description,
-        deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
-        category: suggestion.category,
+        deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+        category: suggestion.category as GoalCategory,
         priority: suggestion.difficulty === 'Hard' ? 'high' : suggestion.difficulty === 'Medium' ? 'medium' : 'low',
-        status: 'active'
+        status: 'Pending'
       });
       
       toast({
@@ -91,7 +92,7 @@ export const GoalSuggestions = () => {
     {
       title: "Read 12 Books This Year",
       description: "Expand your knowledge by reading one book per month across various topics",
-      category: "Personal Development",
+      category: "Personal",
       difficulty: "Medium"
     },
     {
