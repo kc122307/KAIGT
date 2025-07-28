@@ -70,7 +70,6 @@ export const GoalSuggestions = () => {
         description: suggestion.description,
         deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
         category: suggestion.category as GoalCategory,
-        priority: suggestion.difficulty === 'Hard' ? 'high' : suggestion.difficulty === 'Medium' ? 'medium' : 'low',
         status: 'Pending'
       });
       
