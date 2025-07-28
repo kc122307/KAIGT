@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -97,9 +98,6 @@ const App = () => (
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/team" element={<TeamPage />} />
                 <Route path="/ai" element={<AIPage />} />
-                
-                {/* Placeholder routes - redirect to root for now */}
-                <Route path="/teams" element={<Navigate to="/team" replace />} />
               </Route>
               
               {/* Catch-all NotFound route */}
