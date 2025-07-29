@@ -9,13 +9,20 @@ import { VoiceInterface } from "@/components/AI/VoiceInterface";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Brain, Target, History, Bot, FileText, Mic } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const AIPage = () => {
   const [selectedPersonality, setSelectedPersonality] = useState(null);
   const [currentConversation, setCurrentConversation] = useState(null);
+  const [activeTab, setActiveTab] = useState("coach");
+  const { toast } = useToast();
 
   const handlePersonalitySelect = (personality) => {
     setSelectedPersonality(personality);
+    toast({
+      title: "Mode Selected",
+      description: `Switched to ${personality.name} mode. This will influence future AI responses.`,
+    });
     console.log('Selected personality:', personality);
   };
 
@@ -25,18 +32,44 @@ const AIPage = () => {
   };
 
   const handleTemplateSelect = (template) => {
+    setActiveTab("coach");
+    toast({
+      title: "Template Selected",
+      description: `Using ${template.title} template in your coaching session.`,
+    });
     console.log('Selected template:', template);
-    // This would typically send the template prompt to the AI coach
   };
 
   const handleVoiceTranscription = (text) => {
     console.log('Voice transcription:', text);
-    // This would typically send the transcribed text to the AI coach
   };
 
   const handleSpeakText = (text) => {
     console.log('Speaking text:', text);
-    // This would typically use text-to-speech for AI responses
+  };
+
+  const handleGoalSuggestion = (suggestion) => {
+    setActiveTab("goals");
+    toast({
+      title: "Goal Suggestion",
+      description: `Check out this suggested goal: ${suggestion.title}`,
+    });
+  };
+
+  const handleModeRecommendation = (mode) => {
+    setActiveTab("personality");
+    toast({
+      title: "Mode Recommended",
+      description: `The AI recommends trying ${mode.name} mode for your current needs.`,
+    });
+  };
+
+  const handleTemplateRecommendation = (template) => {
+    setActiveTab("templates");
+    toast({
+      title: "Template Suggested",
+      description: `The AI suggests using the ${template.title} template.`,
+    });
   };
 
   return (
@@ -46,7 +79,7 @@ const AIPage = () => {
         <h1 className="text-2xl font-bold">AI Assistant</h1>
       </div>
       
-      <Tabs defaultValue="coach" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="coach" className="flex items-center gap-2">
             <Brain className="h-4 w-4" />
@@ -80,10 +113,20 @@ const AIPage = () => {
               <CardTitle className="flex items-center gap-2">
                 <Brain className="h-5 w-5" />
                 AI Productivity Coach
+                {selectedPersonality && (
+                  <span className="text-sm text-muted-foreground">
+                    • {selectedPersonality.name} Mode
+                  </span>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <AICoach conversation={currentConversation} />
+              <AICoach 
+                conversation={currentConversation}
+                onGoalSuggestion={handleGoalSuggestion}
+                onModeRecommendation={handleModeRecommendation}
+                onTemplateRecommendation={handleTemplateRecommendation}
+              />
             </CardContent>
           </Card>
         </TabsContent>
