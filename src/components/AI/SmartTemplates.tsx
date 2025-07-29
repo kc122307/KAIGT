@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Template, Clock, Target, Calendar, Lightbulb, TrendingUp } from "lucide-react";
+import { FileText, Clock, Target, Calendar, Lightbulb, TrendingUp } from "lucide-react";
 
 interface SmartTemplate {
   id: string;
@@ -106,7 +105,7 @@ export const SmartTemplates = ({ onTemplateSelect }: SmartTemplatesProps) => {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Template className="h-5 w-5" />
+          <FileText className="h-5 w-5" />
           Smart Templates
         </CardTitle>
       </CardHeader>

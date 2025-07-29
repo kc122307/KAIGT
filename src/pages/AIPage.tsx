@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { AICoach } from "@/components/AI/AICoach";
 import { GoalSuggestions } from "@/components/AI/GoalSuggestions";
@@ -8,7 +7,7 @@ import { SmartTemplates } from "@/components/AI/SmartTemplates";
 import { VoiceInterface } from "@/components/AI/VoiceInterface";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, Target, History, Bot, Template, Mic } from "lucide-react";
+import { Brain, Target, History, Bot, FileText, Mic } from "lucide-react";
 
 const AIPage = () => {
   const [selectedPersonality, setSelectedPersonality] = useState(null);
@@ -65,7 +64,7 @@ const AIPage = () => {
             Modes
           </TabsTrigger>
           <TabsTrigger value="templates" className="flex items-center gap-2">
-            <Template className="h-4 w-4" />
+            <FileText className="h-4 w-4" />
             Templates
           </TabsTrigger>
           <TabsTrigger value="voice" className="flex items-center gap-2">
