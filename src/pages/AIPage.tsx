@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { AICoach } from "@/components/AI/AICoach";
 import { GoalSuggestions } from "@/components/AI/GoalSuggestions";
@@ -74,35 +75,20 @@ const AIPage = () => {
         </TabsList>
 
         <TabsContent value="coach" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Brain className="h-5 w-5" />
-                  AI Productivity Coach
-                  {selectedPersonality && (
-                    <span className="text-sm font-normal text-muted-foreground">
-                      ({selectedPersonality.name})
-                    </span>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <AICoach 
-                  personality={selectedPersonality}
-                  conversation={currentConversation}
-                />
-              </CardContent>
-            </Card>
-            
-            <div className="space-y-4">
-              <PersonalityModes 
-                onModeSelect={handlePersonalitySelect}
-                selectedMode={selectedPersonality}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Brain className="h-5 w-5" />
+                AI Productivity Coach
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <AICoach 
+                personality={selectedPersonality}
+                conversation={currentConversation}
               />
-              <SmartTemplates onTemplateSelect={handleTemplateSelect} />
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="goals" className="space-y-6">

@@ -104,29 +104,11 @@ export const AICoach = ({ personality, conversation }: AICoachProps) => {
 
   return (
     <div className="space-y-4">
-      {/* Personality Mode Indicator */}
-      {personality && (
-        <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
-          <div className={`p-2 rounded-lg ${personality.color}`}>
-            {personality.icon}
-          </div>
-          <div>
-            <p className="font-medium text-sm">{personality.name} Mode</p>
-            <p className="text-xs text-muted-foreground">{personality.description}</p>
-          </div>
-        </div>
-      )}
-
       {/* Conversation Area */}
       <div className="h-96 overflow-y-auto space-y-3 p-4 border rounded-lg bg-muted/50">
         {conversationHistory.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">
-            <p>
-              {personality 
-                ? `Hello! I'm your ${personality.name.toLowerCase()}. ${personality.description}` 
-                : "Hello! I'm your AI productivity coach. Ask me anything about goal setting, time management, or productivity tips!"
-              }
-            </p>
+            <p>Hello! I'm your AI productivity coach. Ask me anything about goal setting, time management, or productivity tips!</p>
           </div>
         ) : (
           conversationHistory.map((msg, index) => (
@@ -186,9 +168,7 @@ export const AICoach = ({ personality, conversation }: AICoachProps) => {
           <Card className="mr-8 bg-secondary/50 p-3">
             <div className="flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
-              <p className="text-sm text-muted-foreground">
-                {personality ? `${personality.name} is thinking...` : 'AI is thinking...'}
-              </p>
+              <p className="text-sm text-muted-foreground">AI is thinking...</p>
             </div>
           </Card>
         )}
@@ -200,11 +180,7 @@ export const AICoach = ({ personality, conversation }: AICoachProps) => {
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder={
-            personality 
-              ? `Ask your ${personality.name.toLowerCase()} for advice...`
-              : "Ask your AI coach for productivity advice..."
-          }
+          placeholder="Ask your AI coach for productivity advice..."
           className="resize-none"
           rows={2}
         />
