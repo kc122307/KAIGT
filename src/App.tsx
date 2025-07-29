@@ -1,5 +1,4 @@
 
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,7 +9,6 @@ import { AppLayout } from "./components/Layout/AppLayout";
 import { LoginForm } from "./components/Auth/LoginForm";
 import { useEffect, useState } from "react";
 import { useGoalStore } from "./store/goalStore";
-import { supabase } from "@/integrations/supabase/client";
 
 // Pages
 import Index from "./pages/Index";
@@ -35,6 +33,19 @@ const queryClient = new QueryClient({
   },
 });
 
+// Protected Route Component
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const isAuthenticated = useGoalStore(state => state.isAuthenticated);
+  const location = useLocation();
+  
+  if (!isAuthenticated) {
+    // Save the attempted route to redirect back after login
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  
+  return <>{children}</>;
+};
+
 // AppInitializer component to fetch initial data
 const AppInitializer = ({ children }: { children: React.ReactNode }) => {
   const fetchUserData = useGoalStore(state => state.fetchUserData);
@@ -45,11 +56,11 @@ const AppInitializer = ({ children }: { children: React.ReactNode }) => {
 
   // Store last visited path in session storage
   useEffect(() => {
-    // Only save paths that aren't login or non-existing routes
-    if (location.pathname !== '/login' && location.pathname !== '*') {
+    // Only save paths that aren't login or non-existing routes for authenticated users
+    if (location.pathname !== '/login' && location.pathname !== '*' && isAuthenticated) {
       sessionStorage.setItem('lastVisitedPath', location.pathname);
     }
-  }, [location.pathname]);
+  }, [location.pathname, isAuthenticated]);
 
   useEffect(() => {
     // Initialize app data
@@ -86,8 +97,12 @@ const App = () => (
               {/* Auth Routes */}
               <Route path="/login" element={<LoginForm />} />
               
-              {/* Public Routes - No longer protected */}
-              <Route element={<AppLayout />}>
+              {/* Protected Routes */}
+              <Route element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }>
                 <Route path="/" element={<Index />} />
                 <Route path="/goals" element={<GoalsPage />} />
                 <Route path="/tasks" element={<TasksPage />} />

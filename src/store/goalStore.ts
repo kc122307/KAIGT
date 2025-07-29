@@ -195,6 +195,12 @@ export const useGoalStore = create<GoalState>((set, get) => ({
         isAuthenticated: false
       });
       
+      // Clear any stored paths and redirect to login
+      sessionStorage.removeItem('lastVisitedPath');
+      
+      // Force redirect to login page
+      window.location.href = '/login';
+      
     } catch (error) {
       console.error("Logout failed:", error);
       throw error;
