@@ -83,10 +83,7 @@ const AIPage = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <AICoach 
-                personality={selectedPersonality}
-                conversation={currentConversation}
-              />
+              <AICoach conversation={currentConversation} />
             </CardContent>
           </Card>
         </TabsContent>

@@ -8,11 +8,10 @@ import { Loader2, Send, Volume2, Copy, ThumbsUp, ThumbsDown } from "lucide-react
 import { useToast } from "@/hooks/use-toast";
 
 interface AICoachProps {
-  personality?: any;
   conversation?: any;
 }
 
-export const AICoach = ({ personality, conversation }: AICoachProps) => {
+export const AICoach = ({ conversation }: AICoachProps) => {
   const [message, setMessage] = useState("");
   const [conversationHistory, setConversationHistory] = useState<Array<{role: 'user' | 'ai', content: string, timestamp: Date}>>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -34,13 +33,6 @@ export const AICoach = ({ personality, conversation }: AICoachProps) => {
     setIsLoading(true);
 
     try {
-      // Construct the prompt with personality mode if selected
-      let systemPrompt = "You are a helpful AI productivity coach. Provide practical, actionable advice about goal setting, time management, productivity, and personal development. Keep responses concise but helpful.";
-      
-      if (personality) {
-        systemPrompt = personality.prompt;
-      }
-
       const response = await fetch('/functions/v1/ai-coach', {
         method: 'POST',
         headers: {
@@ -48,7 +40,6 @@ export const AICoach = ({ personality, conversation }: AICoachProps) => {
         },
         body: JSON.stringify({ 
           message: userMessage,
-          systemPrompt: systemPrompt,
           history: conversationHistory.slice(-10) // Send last 10 messages for context
         }),
       });
