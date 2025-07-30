@@ -42,8 +42,8 @@ export const Stats = () => {
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {stats.map((stat) => (
-        <Card key={stat.title}>
+      {stats.map((stat, index) => (
+        <Card key={stat.title} className="stats-card hover:scale-105 transition-transform duration-200">
           <CardContent className="p-4 flex justify-between items-center">
             <div>
               <p className="text-sm text-muted-foreground">{stat.title}</p>

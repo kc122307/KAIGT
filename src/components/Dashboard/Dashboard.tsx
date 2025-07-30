@@ -12,6 +12,7 @@ import { AddGoalModal } from './AddGoalModal';
 import { getFilteredGoals } from '../../services/api/goalService';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
+import { useGSAP } from '../../hooks/useGSAP';
 
 export const Dashboard = () => {
   const { 
@@ -27,6 +28,7 @@ export const Dashboard = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [filteredGoals, setFilteredGoals] = useState(goals);
   const [isLoading, setIsLoading] = useState(false);
+  const { containerRef } = useGSAP();
   
   // Subscribe to real-time updates when component mounts
   useEffect(() => {
@@ -137,42 +139,52 @@ export const Dashboard = () => {
   }, [goals, currentUser, filterCategory, filterStatus]);
   
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div ref={containerRef} className="container mx-auto px-4 py-8">
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Main content */}
         <div className="lg:w-3/4 space-y-6">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center scroll-fade">
             <h1 className="text-2xl font-bold">My Goals</h1>
             <button 
               onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md px-4 py-2"
+              className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md px-4 py-2 hover:scale-105 transition-all duration-200"
             >
               <PlusIcon size={16} />
               <span>Add Goal</span>
             </button>
           </div>
           
-          <Stats />
+          <div className="scroll-fade">
+            <Stats />
+          </div>
           
-          <GoalFilters 
-            filterCategory={filterCategory}
-            filterStatus={filterStatus}
-            onCategoryChange={setFilterCategory}
-            onStatusChange={setFilterStatus}
-          />
+          <div className="scroll-fade">
+            <GoalFilters 
+              filterCategory={filterCategory}
+              filterStatus={filterStatus}
+              onCategoryChange={setFilterCategory}
+              onStatusChange={setFilterStatus}
+            />
+          </div>
           
-          <GoalList goals={filteredGoals} isLoading={isLoading} />
+          <div className="scroll-fade">
+            <GoalList goals={filteredGoals} isLoading={isLoading} />
+          </div>
           
-          <div className="mt-8">
+          <div className="mt-8 scroll-fade">
             <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
             <ActivityLog limit={5} showViewMore={true} />
           </div>
         </div>
         
         {/* Sidebar */}
-        <div className="lg:w-1/4 space-y-6">
-          <Notifications />
-          <Leaderboard />
+        <div className="lg:w-1/4 space-y-6 parallax-sidebar">
+          <div className="scroll-fade">
+            <Notifications />
+          </div>
+          <div className="scroll-fade">
+            <Leaderboard />
+          </div>
         </div>
       </div>
       

@@ -33,18 +33,18 @@ export const GoalCard = ({ goal, onClick }: GoalCardProps) => {
   return (
     <Card 
       onClick={onClick}
-      className="cursor-pointer hover:shadow-md transition-shadow duration-200 overflow-hidden"
+      className="goal-card cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 transform overflow-hidden"
     >
       <div className={cn("w-full h-1", statusColors[goal.status])} />
       
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <div className="flex gap-2 items-center">
-            <span className="text-xl">{categoryIcons[goal.category]}</span>
+            <span className="text-xl animate-bounce">{categoryIcons[goal.category]}</span>
             <p className="text-sm text-muted-foreground">{goal.category}</p>
           </div>
           <div className={cn(
-            "text-xs font-medium px-2 py-1 rounded-full",
+            "text-xs font-medium px-2 py-1 rounded-full transition-all duration-200",
             goal.status === 'Completed' ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" :
             goal.status === 'In-Progress' ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" :
             "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
@@ -63,7 +63,7 @@ export const GoalCard = ({ goal, onClick }: GoalCardProps) => {
             <span>Progress</span>
             <span className="font-medium">{goal.progress}%</span>
           </div>
-          <Progress value={goal.progress} className="h-2" />
+          <Progress value={goal.progress} className="h-2 transition-all duration-500" />
         </div>
       </CardContent>
       
@@ -75,7 +75,7 @@ export const GoalCard = ({ goal, onClick }: GoalCardProps) => {
           </div>
           
           {isOverdue ? (
-            <span className="text-destructive font-medium">Overdue</span>
+            <span className="text-destructive font-medium animate-pulse">Overdue</span>
           ) : (
             <div className="flex items-center gap-1">
               <Clock size={14} />
