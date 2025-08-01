@@ -1,3 +1,4 @@
+
 import { Link, useLocation } from "react-router-dom";
 import { useGoalStore } from "../../store/goalStore";
 import { Button } from "@/components/ui/button";
@@ -23,8 +24,13 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ open }: SidebarProps) => {
-  const { logout, currentUser } = useGoalStore();
+  const { logout, currentUser, goals } = useGoalStore();
   const location = useLocation();
+  
+  // Calculate completed goals from actual goals data
+  const completedGoalsCount = currentUser 
+    ? goals.filter(goal => goal.user_id === currentUser.id && goal.status === 'Completed').length
+    : 0;
   
   const navItems = [
     { title: 'Dashboard', icon: <Home className="h-5 w-5" />, path: '/' },
@@ -57,7 +63,7 @@ export const Sidebar = ({ open }: SidebarProps) => {
           <div>
             <div className="font-medium">{currentUser.name}</div>
             <div className="text-xs text-muted-foreground">
-              {currentUser.completedGoals} goals completed
+              {completedGoalsCount} goals completed
             </div>
           </div>
         </div>
@@ -82,7 +88,6 @@ export const Sidebar = ({ open }: SidebarProps) => {
       
       <Separator className="my-4" />
       
-      {/* Settings and Logout */}
       <div className="space-y-1">
         <Link to="/settings">
           <Button

@@ -11,7 +11,7 @@ import { TeamInvitation } from "../components/Team/TeamInvitation";
 import { useGSAP } from "../hooks/useGSAP";
 
 const TeamPage = () => {
-  const { users: storeUsers } = useGoalStore();
+  const { users: storeUsers, currentUser } = useGoalStore();
   const [refreshedUsers, setRefreshedUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { containerRef } = useGSAP();
@@ -48,7 +48,6 @@ const TeamPage = () => {
         },
         (payload) => {
           console.log('Profiles change received in team page:', payload);
-          // Refresh data when profiles are updated
           fetchLatestUserData();
         }
       )
@@ -66,7 +65,6 @@ const TeamPage = () => {
         },
         (payload) => {
           console.log('Goals change received in team page:', payload);
-          // Refresh data when goals are updated
           fetchLatestUserData();
         }
       )
@@ -84,7 +82,6 @@ const TeamPage = () => {
         },
         (payload) => {
           console.log('Activity change received in team page:', payload);
-          // Refresh data when activities are updated
           fetchLatestUserData();
         }
       )
@@ -102,7 +99,6 @@ const TeamPage = () => {
         },
         (payload) => {
           console.log('Team invitation change received:', payload);
-          // Refresh user data when team invitations are updated
           fetchLatestUserData();
         }
       )
@@ -116,8 +112,9 @@ const TeamPage = () => {
     };
   }, [storeUsers]);
   
-  // Use refreshed data, fallback to store data
-  const users = refreshedUsers.length > 0 ? refreshedUsers : storeUsers;
+  // Use refreshed data, fallback to store data, and filter out current user
+  const allUsers = refreshedUsers.length > 0 ? refreshedUsers : storeUsers;
+  const users = allUsers.filter(user => user.id !== currentUser?.id);
   
   return (
     <div ref={containerRef} className="space-y-6">
@@ -125,7 +122,6 @@ const TeamPage = () => {
         <h1 className="text-3xl font-bold">Team</h1>
       </div>
       
-      {/* Add the TeamInvitation component */}
       <div className="scroll-fade">
         <TeamInvitation />
       </div>
