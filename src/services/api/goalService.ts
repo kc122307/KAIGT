@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Goal, GoalCategory, GoalStatus } from '../../types';
 import { addActivity } from './activityService';
@@ -177,21 +176,37 @@ export const updateGoalStatus = async (goalId: string, status: GoalStatus): Prom
     throw new Error("User not authenticated");
   }
   
-  // First, get current goal to determine if we need to update progress
+  // First, get current goal to determine progress changes
   const { data: currentGoal } = await supabase
     .from('goals')
     .select('*')
     .eq('id', goalId)
     .single();
     
-  // Update the goal status and progress if completed
-  const progress = status === 'Completed' ? 100 : currentGoal.progress;
+  if (!currentGoal) {
+    throw new Error("Goal not found");
+  }
+    
+  // Apply progress rules based on status transitions
+  let newProgress = currentGoal.progress;
   
+  if (currentGoal.status === 'Completed' && status === 'Pending') {
+    // Completed to Pending: set progress to 0%
+    newProgress = 0;
+  } else if (status === 'Completed' && (currentGoal.status === 'Pending' || currentGoal.status === 'In-Progress')) {
+    // Pending/In-Progress to Completed: set progress to 100%
+    newProgress = 100;
+  } else if (currentGoal.status === 'Completed' && status === 'In-Progress') {
+    // Completed to In-Progress: keep current progress unchanged
+    newProgress = currentGoal.progress;
+  }
+  
+  // Update the goal status and progress
   const { data, error } = await supabase
     .from('goals')
     .update({ 
       status, 
-      progress,
+      progress: newProgress,
       updated_at: new Date().toISOString()
     })
     .eq('id', goalId)

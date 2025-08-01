@@ -36,8 +36,28 @@ export const GoalDetailModal = ({ goalId, onClose }: GoalDetailModalProps) => {
     updateGoalProgress(goal.id, progress);
   };
   
-  const handleStatusChange = (status: GoalStatus) => {
-    updateGoalStatus(goal.id, status);
+  const handleStatusChange = (newStatus: GoalStatus) => {
+    const currentStatus = goal.status;
+    
+    // Apply progress rules based on status transitions
+    let newProgress = goal.progress;
+    
+    if (currentStatus === 'Completed' && newStatus === 'Pending') {
+      // Completed to Pending: set progress to 0%
+      newProgress = 0;
+    } else if (newStatus === 'Completed' && (currentStatus === 'Pending' || currentStatus === 'In-Progress')) {
+      // Pending/In-Progress to Completed: set progress to 100%
+      newProgress = 100;
+    } else if (currentStatus === 'Completed' && newStatus === 'In-Progress') {
+      // Completed to In-Progress: keep current progress unchanged
+      newProgress = goal.progress;
+    }
+    
+    // Update the local progress state to reflect the change
+    setProgress(newProgress);
+    
+    // Update the goal status (the service will handle progress update based on the rules)
+    updateGoalStatus(goal.id, newStatus);
   };
   
   const handleDeleteGoal = () => {
