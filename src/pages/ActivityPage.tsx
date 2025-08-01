@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useGoalStore } from "../store/goalStore";
 import { format, subDays } from "date-fns";
@@ -14,24 +13,24 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Calendar } from "lucide-react";
+import { Calendar, Activity as ActivityIcon, TrendingUp, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Activity } from "../types";
 import { supabase } from "@/integrations/supabase/client";
 import { getUsers } from "../services/api/userService";
+import { useGSAP } from "../hooks/useGSAP";
 
 const ActivityPage = () => {
   const [timeFilter, setTimeFilter] = useState<string>("all");
   const { activities, goals, currentUser } = useGoalStore();
   const [completedGoalsCount, setCompletedGoalsCount] = useState(0);
+  const { containerRef } = useGSAP();
   
-  // Fetch fresh data for completed goals count
   useEffect(() => {
     const fetchLatestStats = async () => {
       if (!currentUser) return;
       
       try {
-        // Force refresh to get accurate completed goals count
         const users = await getUsers(true);
         const currentUserData = users.find(user => user.id === currentUser.id);
         if (currentUserData) {
@@ -39,7 +38,6 @@ const ActivityPage = () => {
         }
       } catch (error) {
         console.error("Error fetching completed goals count:", error);
-        // Fall back to counting completed goals from the goals array
         const uniqueCompletedGoalIds = new Set(
           activities
             .filter(activity => activity.action_type === 'completed')
@@ -51,7 +49,6 @@ const ActivityPage = () => {
     
     fetchLatestStats();
     
-    // Set up real-time subscriptions for goals and activities
     const goalsChannel = supabase
       .channel('public:goals_activity_page')
       .on(
@@ -90,7 +87,6 @@ const ActivityPage = () => {
     };
   }, [activities, currentUser]);
   
-  // Filter activities by time
   const getFilteredActivities = () => {
     const now = new Date();
     
@@ -114,7 +110,6 @@ const ActivityPage = () => {
     }
   };
 
-  // Group activities by date
   const groupActivitiesByDate = (activities: Activity[]) => {
     const grouped: Record<string, Activity[]> = {};
     
@@ -126,7 +121,6 @@ const ActivityPage = () => {
       grouped[date].push(activity);
     });
     
-    // Sort dates in descending order
     return Object.entries(grouped)
       .sort(([dateA], [dateB]) => 
         new Date(dateB).getTime() - new Date(dateA).getTime()
@@ -136,28 +130,31 @@ const ActivityPage = () => {
   const filteredActivities = getFilteredActivities();
   const groupedActivities = groupActivitiesByDate(filteredActivities);
   
-  // Get goal title by id
   const getGoalTitle = (goalId: string) => {
     return goals.find(goal => goal.id === goalId)?.title || "Unknown Goal";
   };
   
-  // Calculate activity stats
   const totalActivities = activities.length;
   const todayActivities = activities.filter(activity => 
     new Date(activity.timestamp).toDateString() === new Date().toDateString()
   ).length;
   
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-3xl font-bold">Activity Log</h1>
+    <div ref={containerRef} className="space-y-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 scroll-fade">
+        <div>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            Activity Timeline
+          </h1>
+          <p className="text-muted-foreground mt-2 text-lg">Track all your goal-related activities and progress</p>
+        </div>
         
-        <div className="w-full sm:w-48">
+        <div className="w-full sm:w-64">
           <Select value={timeFilter} onValueChange={setTimeFilter}>
-            <SelectTrigger>
+            <SelectTrigger className="hover:scale-105 transition-transform duration-200 border-indigo-200 hover:border-indigo-300">
               <SelectValue placeholder="Filter by time" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="animate-scale-in">
               <SelectGroup>
                 <SelectLabel>Time Period</SelectLabel>
                 <SelectItem value="all">All Time</SelectItem>
@@ -170,85 +167,136 @@ const ActivityPage = () => {
         </div>
       </div>
       
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+      <div className="grid gap-6 md:grid-cols-3">
+        <Card className="stats-card hover:shadow-xl transition-all duration-300 border-l-4 border-l-indigo-500">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <ActivityIcon className="h-4 w-4" />
               Total Activities
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalActivities}</div>
+            <div className="flex items-baseline gap-2">
+              <div className="text-3xl font-bold text-indigo-600">{totalActivities}</div>
+              <TrendingUp className="h-5 w-5 text-green-500 animate-bounce" />
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">All-time record</p>
           </CardContent>
         </Card>
         
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+        <Card className="stats-card hover:shadow-xl transition-all duration-300 border-l-4 border-l-green-500">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Clock className="h-4 w-4" />
               Today's Activities
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{todayActivities}</div>
+            <div className="flex items-baseline gap-2">
+              <div className="text-3xl font-bold text-green-600">{todayActivities}</div>
+              {todayActivities > 0 && (
+                <div className="h-2 w-2 bg-green-400 rounded-full animate-ping"></div>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Today's progress</p>
           </CardContent>
         </Card>
         
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+        <Card className="stats-card hover:shadow-xl transition-all duration-300 border-l-4 border-l-purple-500">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
               Goals Completed
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{completedGoalsCount}</div>
+            <div className="flex items-baseline gap-2">
+              <div className="text-3xl font-bold text-purple-600">{completedGoalsCount}</div>
+              <div className="flex gap-1">
+                {Array.from({ length: Math.min(completedGoalsCount, 3) }).map((_, i) => (
+                  <div key={i} className="h-1.5 w-1.5 bg-purple-400 rounded-full animate-pulse" style={{ animationDelay: `${i * 0.2}s` }}></div>
+                ))}
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Achievements unlocked</p>
           </CardContent>
         </Card>
       </div>
       
       {groupedActivities.length > 0 ? (
-        <div className="space-y-6">
-          {groupedActivities.map(([date, dateActivities]) => (
-            <Card key={date} className="overflow-hidden">
-              <CardHeader className="bg-muted/50 py-3">
-                <CardTitle className="text-md font-medium flex items-center">
-                  <Calendar className="mr-2 h-4 w-4" />
-                  {format(new Date(date), "EEEE, MMMM d, yyyy")}
+        <div className="space-y-8">
+          {groupedActivities.map(([date, dateActivities], dayIndex) => (
+            <Card key={date} className="scroll-fade overflow-hidden hover:shadow-xl transition-all duration-300" style={{ animationDelay: `${dayIndex * 0.1}s` }}>
+              <CardHeader className="bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 dark:from-indigo-950/10 dark:via-purple-950/10 dark:to-pink-950/10 py-4 border-l-4 border-l-indigo-500">
+                <CardTitle className="text-lg font-semibold flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 flex items-center justify-center">
+                    <Calendar className="h-5 w-5 text-indigo-600" />
+                  </div>
+                  <div>
+                    <div className="text-xl">{format(new Date(date), "EEEE, MMMM d, yyyy")}</div>
+                    <div className="text-sm text-muted-foreground font-normal">
+                      {dateActivities.length} {dateActivities.length === 1 ? 'activity' : 'activities'}
+                    </div>
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                <ul className="divide-y">
-                  {dateActivities.map(activity => (
-                    <li key={activity.id} className="p-4 flex items-start gap-3">
-                      <div className="mt-1">
+                <ul className="divide-y divide-muted/20">
+                  {dateActivities.map((activity, activityIndex) => (
+                    <li 
+                      key={activity.id} 
+                      className="p-6 flex items-start gap-4 hover:bg-gradient-to-r hover:from-muted/30 hover:to-transparent transition-all duration-200 group"
+                      style={{ animationDelay: `${(dayIndex * 0.1) + (activityIndex * 0.05)}s` }}
+                    >
+                      <div className="mt-1 relative">
                         {activity.action_type === 'created' && (
-                          <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300">+</div>
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-900 dark:to-cyan-900 flex items-center justify-center text-blue-600 dark:text-blue-300 group-hover:scale-110 transition-transform duration-200">
+                            <span className="text-lg font-bold">+</span>
+                            <div className="absolute -top-1 -right-1 h-3 w-3 bg-blue-400 rounded-full animate-ping opacity-50"></div>
+                          </div>
                         )}
                         {activity.action_type === 'updated' && (
-                          <div className="h-8 w-8 rounded-full bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center text-yellow-600 dark:text-yellow-300">↻</div>
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-900 dark:to-orange-900 flex items-center justify-center text-yellow-600 dark:text-yellow-300 group-hover:scale-110 transition-transform duration-200">
+                            <span className="text-lg">↻</span>
+                          </div>
                         )}
                         {activity.action_type === 'completed' && (
-                          <div className="h-8 w-8 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center text-green-600 dark:text-green-300">✓</div>
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900 dark:to-emerald-900 flex items-center justify-center text-green-600 dark:text-green-300 group-hover:scale-110 transition-transform duration-200">
+                            <span className="text-lg">✓</span>
+                            <div className="absolute -top-1 -right-1 h-3 w-3 bg-green-400 rounded-full animate-pulse"></div>
+                          </div>
                         )}
                         {activity.action_type === 'deleted' && (
-                          <div className="h-8 w-8 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center text-red-600 dark:text-red-300">×</div>
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-r from-red-100 to-rose-100 dark:from-red-900 dark:to-rose-900 flex items-center justify-center text-red-600 dark:text-red-300 group-hover:scale-110 transition-transform duration-200">
+                            <span className="text-lg">×</span>
+                          </div>
                         )}
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{activity.details}</p>
-                        <div className="flex flex-wrap gap-2 mt-1">
-                          <Badge variant={
-                            activity.action_type === 'created' ? 'info' : 
-                            activity.action_type === 'updated' ? 'warning' :
-                            activity.action_type === 'completed' ? 'success' : 'destructive'
-                          }>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-base font-medium mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors duration-200">
+                          {activity.details}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <Badge 
+                            variant={
+                              activity.action_type === 'created' ? 'info' : 
+                              activity.action_type === 'updated' ? 'warning' :
+                              activity.action_type === 'completed' ? 'success' : 'destructive'
+                            }
+                            className="font-medium transition-transform duration-200 group-hover:scale-105"
+                          >
                             {activity.action_type}
                           </Badge>
-                          <Badge variant="outline">
+                          <Badge 
+                            variant="outline" 
+                            className="max-w-48 truncate transition-all duration-200 group-hover:scale-105 hover:bg-muted"
+                          >
                             {getGoalTitle(activity.goal_id)}
                           </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            {format(new Date(activity.timestamp), "h:mm a")}
-                          </span>
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            <span>{format(new Date(activity.timestamp), "h:mm a")}</span>
+                          </div>
                         </div>
                       </div>
                     </li>
@@ -259,9 +307,23 @@ const ActivityPage = () => {
           ))}
         </div>
       ) : (
-        <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
-            No activities found for the selected time period.
+        <Card className="scroll-fade hover:shadow-lg transition-all duration-300">
+          <CardContent className="py-16 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <ActivityIcon className="h-16 w-16 text-muted-foreground animate-bounce" />
+                <div className="absolute -top-2 -right-2 h-6 w-6 bg-indigo-500 rounded-full animate-ping opacity-75"></div>
+              </div>
+              <div>
+                <h3 className="text-2xl font-semibold mb-2">No Activities Found</h3>
+                <p className="text-muted-foreground max-w-md mx-auto">
+                  {timeFilter === "all" 
+                    ? "Start creating and managing goals to see your activity timeline here!"
+                    : `No activities found for the selected time period. Try adjusting your filter or create some goals!`
+                  }
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
