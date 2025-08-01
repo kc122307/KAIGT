@@ -1,11 +1,14 @@
+
 import { useGoalStore } from "../store/goalStore";
 import { format } from "date-fns";
 import { Bell, Calendar, Clock, Trophy, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useGSAP } from "../hooks/useGSAP";
 
 const NotificationsPage = () => {
   const { notifications, markNotificationAsRead, clearAllNotifications } = useGoalStore();
+  const { containerRef } = useGSAP();
   
   const sortedNotifications = [...notifications]
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
@@ -28,8 +31,8 @@ const NotificationsPage = () => {
   };
   
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+    <div ref={containerRef} className="container mx-auto px-4 py-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 scroll-fade">
         <h1 className="text-2xl font-bold">Notifications</h1>
         
         <div className="flex items-center gap-4">
@@ -43,14 +46,14 @@ const NotificationsPage = () => {
       
       <div className="space-y-4">
         {sortedNotifications.length === 0 ? (
-          <Card className="p-8 text-center">
+          <Card className="p-8 text-center scroll-fade">
             <p className="text-muted-foreground">No notifications to display.</p>
           </Card>
         ) : (
           sortedNotifications.map(notification => (
             <Card 
               key={notification.id} 
-              className={`p-4 ${!notification.is_read ? 'border-l-4 border-l-primary' : ''}`}
+              className={`p-4 scroll-fade ${!notification.is_read ? 'border-l-4 border-l-primary' : ''}`}
             >
               <div className="flex gap-4">
                 <div className={`p-2 rounded-full ${

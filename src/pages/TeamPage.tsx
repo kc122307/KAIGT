@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useGoalStore } from "../store/goalStore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,11 +8,13 @@ import { getUsers } from "../services/api/userService";
 import { User } from "../types";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamInvitation } from "../components/Team/TeamInvitation";
+import { useGSAP } from "../hooks/useGSAP";
 
 const TeamPage = () => {
   const { users: storeUsers } = useGoalStore();
   const [refreshedUsers, setRefreshedUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const { containerRef } = useGSAP();
   
   // Fetch fresh user data to ensure we have updated streak counts and completed goals
   useEffect(() => {
@@ -119,15 +120,17 @@ const TeamPage = () => {
   const users = refreshedUsers.length > 0 ? refreshedUsers : storeUsers;
   
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div ref={containerRef} className="space-y-6">
+      <div className="flex items-center justify-between scroll-fade">
         <h1 className="text-3xl font-bold">Team</h1>
       </div>
       
       {/* Add the TeamInvitation component */}
-      <TeamInvitation />
+      <div className="scroll-fade">
+        <TeamInvitation />
+      </div>
       
-      <Card>
+      <Card className="scroll-fade">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg flex items-center gap-2">
             <Users className="h-5 w-5" />

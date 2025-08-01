@@ -1,4 +1,3 @@
-
 import { useGoalStore } from "../../store/goalStore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, Star, Award } from "lucide-react";
@@ -6,11 +5,13 @@ import { useEffect, useState } from "react";
 import { getUsers } from "../../services/api/userService";
 import { User } from "../../types";
 import { supabase } from "@/integrations/supabase/client";
+import { useGSAP } from "../../hooks/useGSAP";
 
 export const Leaderboard = () => {
   const { users: storeUsers, currentUser } = useGoalStore();
   const [refreshedUsers, setRefreshedUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { containerRef } = useGSAP();
   
   // Fetch fresh user data to ensure we have updated streak counts and completed goals
   useEffect(() => {
@@ -128,59 +129,61 @@ export const Leaderboard = () => {
   }
   
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Trophy className="h-5 w-5 text-yellow-500" />
-          Leaderboard
-          {currentUserRank && (
-            <span className="text-xs bg-muted px-2 py-1 rounded-full ml-auto">
-              Your Rank: #{currentUserRank}
-            </span>
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-2">
-        {sortedUsers.length === 0 ? (
-          <div className="text-center py-4 text-muted-foreground">
-            No leaderboard data available
-          </div>
-        ) : (
-          sortedUsers.slice(0, 5).map((user, index) => (
-            <div 
-              key={user.id} 
-              className={`flex items-center justify-between py-2 ${
-                index !== Math.min(sortedUsers.length - 1, 4) ? "border-b" : ""
-              } ${currentUser && user.id === currentUser.id ? "bg-muted/50 rounded-md px-2" : ""}`}
-            >
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="h-8 w-8 rounded-full overflow-hidden">
-                    <img 
-                      src={user.avatar} 
-                      alt={user.name} 
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                  {index === 0 && (
-                    <span className="absolute -top-1 -right-1">
-                      <Award className="h-4 w-4 text-yellow-500" />
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <p className="text-sm font-medium">{user.name}</p>
-                  <p className="text-xs text-muted-foreground">{user.completedGoals} goals completed</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                <span className="font-semibold">{user.streakCount}</span>
-              </div>
+    <div ref={containerRef}>
+      <Card className="scroll-fade">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-yellow-500" />
+            Leaderboard
+            {currentUserRank && (
+              <span className="text-xs bg-muted px-2 py-1 rounded-full ml-auto">
+                Your Rank: #{currentUserRank}
+              </span>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-2">
+          {sortedUsers.length === 0 ? (
+            <div className="text-center py-4 text-muted-foreground">
+              No leaderboard data available
             </div>
-          ))
-        )}
-      </CardContent>
-    </Card>
+          ) : (
+            sortedUsers.slice(0, 5).map((user, index) => (
+              <div 
+                key={user.id} 
+                className={`flex items-center justify-between py-2 ${
+                  index !== Math.min(sortedUsers.length - 1, 4) ? "border-b" : ""
+                } ${currentUser && user.id === currentUser.id ? "bg-muted/50 rounded-md px-2" : ""}`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div className="h-8 w-8 rounded-full overflow-hidden">
+                      <img 
+                        src={user.avatar} 
+                        alt={user.name} 
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    {index === 0 && (
+                      <span className="absolute -top-1 -right-1">
+                        <Award className="h-4 w-4 text-yellow-500" />
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">{user.name}</p>
+                    <p className="text-xs text-muted-foreground">{user.completedGoals} goals completed</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                  <span className="font-semibold">{user.streakCount}</span>
+                </div>
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };

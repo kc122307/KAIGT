@@ -11,6 +11,7 @@ import { GoalCategory, GoalStatus } from "../types";
 import { getUsers } from "../services/api/userService";
 import { supabase } from "@/integrations/supabase/client";
 import { Stats } from "../components/Dashboard/Stats";
+import { useGSAP } from "../hooks/useGSAP";
 
 // Get the proper types from GoalFilters and AddGoalModal components
 interface GoalFiltersProps {
@@ -34,6 +35,7 @@ const GoalsPage = () => {
   const goals = useGoalStore(state => state.goals);
   const currentUser = useGoalStore(state => state.currentUser);
   const [completedGoalsCount, setCompletedGoalsCount] = useState(0);
+  const { containerRef } = useGSAP();
 
   // Filter goals based on category and status
   const filteredGoals = goals.filter(goal => {
@@ -100,8 +102,8 @@ const GoalsPage = () => {
   }, [currentUser]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div ref={containerRef} className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 scroll-fade">
         <h1 className="text-3xl font-bold">Goals</h1>
         <Button onClick={() => setIsAddModalOpen(true)}>
           <PlusCircle className="mr-2 h-4 w-4" />
@@ -110,8 +112,8 @@ const GoalsPage = () => {
       </div>
 
       {/* Display stats at the top including completed goals */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 scroll-fade">
+        <Card className="stats-card">
           <CardContent className="p-4 flex justify-between items-center">
             <div>
               <p className="text-sm text-muted-foreground">Completed Goals</p>
@@ -124,7 +126,7 @@ const GoalsPage = () => {
         </Card>
       </div>
 
-      <Card>
+      <Card className="scroll-fade">
         <CardHeader className="py-4">
           <CardTitle className="flex items-center text-lg">
             <Filter className="mr-2 h-4 w-4" />
@@ -141,7 +143,9 @@ const GoalsPage = () => {
         </CardContent>
       </Card>
 
-      <GoalList goals={filteredGoals} />
+      <div className="scroll-fade">
+        <GoalList goals={filteredGoals} />
+      </div>
       
       <AddGoalModal 
         open={isAddModalOpen} 

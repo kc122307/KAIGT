@@ -16,11 +16,13 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { useGSAP } from "../hooks/useGSAP";
 
 const TasksPage = () => {
   const goals = useGoalStore((state) => state.goals);
   const updateGoalProgress = useGoalStore((state) => state.updateGoalProgress);
   const [filterValue, setFilterValue] = useState<string>("all");
+  const { containerRef } = useGSAP();
 
   // Group goals by category as "tasks"
   const tasksByCategory = goals.reduce((acc, goal) => {
@@ -44,8 +46,8 @@ const TasksPage = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div ref={containerRef} className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 scroll-fade">
         <h1 className="text-3xl font-bold">Tasks</h1>
         <div className="flex gap-2">
           <DropdownMenu>
@@ -90,7 +92,7 @@ const TasksPage = () => {
       </div>
 
       {Object.keys(tasksByCategory).length === 0 ? (
-        <Card className="text-center py-12">
+        <Card className="text-center py-12 scroll-fade">
           <CardContent>
             <div className="flex flex-col items-center gap-2">
               <ListChecks className="h-12 w-12 text-muted-foreground" />
@@ -104,8 +106,8 @@ const TasksPage = () => {
           </CardContent>
         </Card>
       ) : (
-        Object.entries(tasksByCategory).map(([category, tasks]) => (
-          <Card key={category}>
+        Object.entries(tasksByCategory).map(([category, tasks], index) => (
+          <Card key={category} className="scroll-fade" style={{ animationDelay: `${index * 0.1}s` }}>
             <CardHeader className="py-4">
               <CardTitle className="text-lg">{category}</CardTitle>
             </CardHeader>
