@@ -45,11 +45,17 @@ export const GoalDetailModal = ({ goalId, onClose }: GoalDetailModalProps) => {
     if (currentStatus === 'Completed' && newStatus === 'Pending') {
       // Completed to Pending: set progress to 0%
       newProgress = 0;
+    } else if (currentStatus === 'In-Progress' && newStatus === 'Pending') {
+      // In-Progress to Pending: set progress to 0%
+      newProgress = 0;
     } else if (newStatus === 'Completed' && (currentStatus === 'Pending' || currentStatus === 'In-Progress')) {
       // Pending/In-Progress to Completed: set progress to 100%
       newProgress = 100;
     } else if (currentStatus === 'Completed' && newStatus === 'In-Progress') {
       // Completed to In-Progress: keep current progress unchanged
+      newProgress = goal.progress;
+    } else if (currentStatus === 'Pending' && newStatus === 'In-Progress') {
+      // Pending to In-Progress: keep current progress unchanged (last position)
       newProgress = goal.progress;
     }
     

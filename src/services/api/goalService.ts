@@ -193,11 +193,17 @@ export const updateGoalStatus = async (goalId: string, status: GoalStatus): Prom
   if (currentGoal.status === 'Completed' && status === 'Pending') {
     // Completed to Pending: set progress to 0%
     newProgress = 0;
+  } else if (currentGoal.status === 'In-Progress' && status === 'Pending') {
+    // In-Progress to Pending: set progress to 0%
+    newProgress = 0;
   } else if (status === 'Completed' && (currentGoal.status === 'Pending' || currentGoal.status === 'In-Progress')) {
     // Pending/In-Progress to Completed: set progress to 100%
     newProgress = 100;
   } else if (currentGoal.status === 'Completed' && status === 'In-Progress') {
     // Completed to In-Progress: keep current progress unchanged
+    newProgress = currentGoal.progress;
+  } else if (currentGoal.status === 'Pending' && status === 'In-Progress') {
+    // Pending to In-Progress: keep current progress unchanged (last position)
     newProgress = currentGoal.progress;
   }
   
