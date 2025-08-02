@@ -19,8 +19,8 @@ export const LoginForm = () => {
   // Handle redirection when authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      // Get the last visited path from storage, or default to '/'
-      const lastPath = sessionStorage.getItem('lastVisitedPath') || '/';
+      // Get the last visited path from storage, or default to '/dashboard'
+      const lastPath = sessionStorage.getItem('lastVisitedPath') || '/dashboard';
       navigate(lastPath, { replace: true });
     }
   }, [isAuthenticated, navigate]);

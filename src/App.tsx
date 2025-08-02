@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { useGoalStore } from "./store/goalStore";
 
 // Pages
+import LandingPage from "./pages/LandingPage";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ActivityPage from "./pages/ActivityPage";
@@ -46,6 +47,17 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Public Route Component - redirects to dashboard if already authenticated
+const PublicRoute = ({ children }: { children: React.ReactNode }) => {
+  const isAuthenticated = useGoalStore(state => state.isAuthenticated);
+  
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
 // AppInitializer component to fetch initial data
 const AppInitializer = ({ children }: { children: React.ReactNode }) => {
   const fetchUserData = useGoalStore(state => state.fetchUserData);
@@ -57,7 +69,7 @@ const AppInitializer = ({ children }: { children: React.ReactNode }) => {
   // Store last visited path in session storage
   useEffect(() => {
     // Only save paths that aren't login or non-existing routes for authenticated users
-    if (location.pathname !== '/login' && location.pathname !== '*' && isAuthenticated) {
+    if (location.pathname !== '/login' && location.pathname !== '*' && location.pathname !== '/' && isAuthenticated) {
       sessionStorage.setItem('lastVisitedPath', location.pathname);
     }
   }, [location.pathname, isAuthenticated]);
@@ -94,8 +106,17 @@ const App = () => (
         <BrowserRouter>
           <AppInitializer>
             <Routes>
-              {/* Auth Routes */}
-              <Route path="/login" element={<LoginForm />} />
+              {/* Public Routes */}
+              <Route path="/" element={
+                <PublicRoute>
+                  <LandingPage />
+                </PublicRoute>
+              } />
+              <Route path="/login" element={
+                <PublicRoute>
+                  <LoginForm />
+                </PublicRoute>
+              } />
               
               {/* Protected Routes */}
               <Route element={
@@ -103,7 +124,7 @@ const App = () => (
                   <AppLayout />
                 </ProtectedRoute>
               }>
-                <Route path="/" element={<Index />} />
+                <Route path="/dashboard" element={<Index />} />
                 <Route path="/goals" element={<GoalsPage />} />
                 <Route path="/tasks" element={<TasksPage />} />
                 <Route path="/progress" element={<ProgressPage />} />

@@ -16,8 +16,8 @@ export const useAuth = (authType: AuthType) => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Get the redirect path from location state or default to '/'
-  const from = (location.state as any)?.from?.pathname || '/';
+  // Get the redirect path from location state or default to '/dashboard'
+  const from = (location.state as any)?.from?.pathname || '/dashboard';
   
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -35,7 +35,7 @@ export const useAuth = (authType: AuthType) => {
           duration: 3000,
         });
         
-        // Navigate to the previous page or home
+        // Navigate to the previous page or dashboard
         navigate(from, { replace: true });
       } else {
         if (!name.trim()) {
