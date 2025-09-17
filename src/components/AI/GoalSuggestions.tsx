@@ -24,7 +24,7 @@ export const GoalSuggestions = () => {
     setIsLoading(true);
     
     try {
-      const response = await fetch('SUPABASE_URL/functions/v1/ai-coach', {
+      const response = await fetch('/functions/v1/ai-coach', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
