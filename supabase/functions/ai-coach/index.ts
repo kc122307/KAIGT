@@ -1,8 +1,8 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+// Updated: Use DEEPSEEK_API_KEY as the environment variable name
+const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,10 +17,11 @@ serve(async (req) => {
   try {
     const { message, userContext, history, requestSuggestions } = await req.json();
 
-    if (!openAIApiKey) {
+    // Updated: Check for the new deepseekApiKey
+    if (!deepseekApiKey) {
       return new Response(
         JSON.stringify({ 
-          response: "I'm your AI productivity coach! However, I need an OpenAI API key to provide personalized responses. Please configure your API key in the edge function settings.",
+          response: "I'm your AI productivity coach! However, I need a DeepSeek API key to provide personalized responses. Please configure your API key in the edge function settings.",
           suggestions: {}
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -51,14 +52,17 @@ serve(async (req) => {
       { role: 'user', content: message }
     ];
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Updated: Change the fetch URL to DeepSeek's endpoint
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        // Updated: Use the new deepseekApiKey for authorization
+        'Authorization': `Bearer ${deepseekApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        // Updated: Change the model to a DeepSeek model
+        model: 'deepseek-chat', 
         messages,
         max_tokens: 600,
       }),
@@ -85,14 +89,17 @@ Return JSON in this exact format (omit sections if not relevant):
 }`;
 
       try {
-        const suggestionResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        // Updated: Change the fetch URL to DeepSeek's endpoint
+        const suggestionResponse = await fetch('https://api.deepseek.com/v1/chat/completions', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${openAIApiKey}`,
+            // Updated: Use the new deepseekApiKey for authorization
+            'Authorization': `Bearer ${deepseekApiKey}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'gpt-4o-mini',
+            // Updated: Change the model to a DeepSeek model
+            model: 'deepseek-chat',
             messages: [{ role: 'user', content: suggestionPrompt }],
             max_tokens: 300,
           }),
