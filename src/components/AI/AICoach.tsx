@@ -51,7 +51,7 @@ export const AICoach = ({ conversation, onGoalSuggestion, onModeRecommendation, 
       // Updated: Use a relative path for deployment
       // You must configure your Vercel project to proxy requests from this path
       // to your Supabase Edge Function URL.
-      const response = await fetch('https://gfqgjnytfgnpfiquqixt.supabase.co/functions/v1/ai-coach', {
+    const response = await fetch('SUPABASE_URL/functions/v1/ai-coach', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
