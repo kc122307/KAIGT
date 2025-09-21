@@ -25,8 +25,8 @@ export interface OpenRouterResponse {
   };
 }
 
-// Get OpenRouter API key from environment variables
-const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
+// Get OpenRouter API key from environment variables (try multiple possible names)
+const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.DEEPSEEK_API_KEY;
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -34,7 +34,7 @@ export const callOpenRouterDirectly = async (request: OpenRouterRequest): Promis
   console.log('🔑 Calling OpenRouter directly from frontend...');
   
   if (!OPENROUTER_API_KEY) {
-    throw new Error('Missing VITE_OPENROUTER_API_KEY environment variable. Please check your .env.local file.');
+    throw new Error('Missing OpenRouter API key. Please check your Vercel environment variables: DEEPSEEK_API_KEY');
   }
   
   // Build context-aware prompt with personality
