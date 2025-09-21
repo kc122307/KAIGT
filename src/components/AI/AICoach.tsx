@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Send, Volume2, Copy, ThumbsUp, ThumbsDown, Target, Bot, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGoalStore } from "@/store/goalStore";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AICoachProps {
   conversation?: any;
@@ -37,6 +38,35 @@ export const AICoach = ({ conversation, onGoalSuggestion, onModeRecommendation, 
     setIsLoading(true);
 
     try {
+      // Get the current session for authentication
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        toast({
+          title: "Authentication Error",
+          description: "Unable to verify authentication. Please try logging out and back in.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (!session || !session.access_token) {
+        console.error('No valid session found');
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to use the AI coach.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      console.log('Using session for AI request:', { 
+        userId: session.user?.id,
+        tokenExists: !!session.access_token,
+        tokenPreview: session.access_token.substring(0, 20) + '...' 
+      });
+      
       // Prepare context about user's goals
       const userContext = {
         goals: goals.map(g => ({
@@ -48,13 +78,12 @@ export const AICoach = ({ conversation, onGoalSuggestion, onModeRecommendation, 
         recentConversation: conversationHistory.slice(-5)
       };
 
-      // Updated: Use a relative path for deployment
-      // You must configure your Vercel project to proxy requests from this path
-      // to your Supabase Edge Function URL.
       const response = await fetch('https://gfqgjnytfgnpfiquqixt.supabase.co/functions/v1/ai-coach', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcWdqbnl0ZmducGZpcXVxaXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYyMDc0ODgsImV4cCI6MjA2MTc4MzQ4OH0.QHEWlB4k_uka9AZoOHXOCW_tlRahaJcMNY5BAS9yjmI',
         },
         body: JSON.stringify({ 
           message: userMessage,
@@ -65,7 +94,23 @@ export const AICoach = ({ conversation, onGoalSuggestion, onModeRecommendation, 
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get AI response');
+        const errorText = await response.text();
+        console.error('AI Coach API Error:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText
+        });
+        
+        if (response.status === 401) {
+          toast({
+            title: "Authentication Failed",
+            description: "Your session may have expired. Please refresh the page and try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        throw new Error(`AI API Error (${response.status}): ${errorText}`);
       }
 
       const data = await response.json();

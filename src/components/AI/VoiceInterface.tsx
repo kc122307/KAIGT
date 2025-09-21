@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Mic, MicOff, Volume2, VolumeX } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface VoiceInterfaceProps {
   onTranscription: (text: string) => void;
@@ -78,17 +79,31 @@ export const VoiceInterface = ({ onTranscription, onSpeakText }: VoiceInterfaceP
 
   const processAudioForTranscription = async (audioBlob: Blob) => {
     try {
+      // Get the current session for authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to use voice transcription.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       // Convert blob to base64 for API call
       const reader = new FileReader();
       reader.onloadend = async () => {
         const base64Audio = reader.result as string;
         const audioData = base64Audio.split(',')[1];
 
-        // Call voice-to-text API (this would need to be implemented)
-        const response = await fetch('/functions/v1/voice-to-text', {
+        // Call voice-to-text API
+        const response = await fetch('https://gfqgjnytfgnpfiquqixt.supabase.co/functions/v1/voice-to-text', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcWdqbnl0ZmducGZpcXVxaXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYyMDc0ODgsImV4cCI6MjA2MTc4MzQ4OH0.QHEWlB4k_uka9AZoOHXOCW_tlRahaJcMNY5BAS9yjmI',
           },
           body: JSON.stringify({ audio: audioData }),
         });

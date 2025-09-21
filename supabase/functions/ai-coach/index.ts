@@ -1,5 +1,10 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+// Initialize Supabase client for server-side authentication
+const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 
 // Updated: Use DEEPSEEK_API_KEY as the environment variable name
 const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY');
@@ -15,13 +20,40 @@ serve(async (req) => {
   }
 
   try {
+    // Get the Authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'No authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Create a Supabase client with the user's JWT
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: {
+          Authorization: authHeader,
+        },
+      },
+    });
+
+    // Verify the user is authenticated
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication failed' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { message, userContext, history, requestSuggestions } = await req.json();
 
-    // Updated: Check for the new deepseekApiKey
+    // Check for DeepSeek API key (free tier available)
     if (!deepseekApiKey) {
       return new Response(
         JSON.stringify({ 
-          response: "I'm your AI productivity coach! However, I need a DeepSeek API key to provide personalized responses. Please configure your API key in the edge function settings.",
+          response: "I'm your AI productivity coach! However, I need a DeepSeek API key to provide personalized responses. Good news: DeepSeek offers a generous FREE tier! Get your free API key at https://platform.deepseek.com and configure it in the edge function settings.",
           suggestions: {}
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -61,10 +93,12 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        // Updated: Change the model to a DeepSeek model
-        model: 'deepseek-chat', 
+        // Using DeepSeek R1 0528 (free tier - excellent reasoning model)
+        model: 'deepseek-r1', 
         messages,
         max_tokens: 600,
+        temperature: 0.7,
+        stream: false
       }),
     });
 
@@ -98,10 +132,12 @@ Return JSON in this exact format (omit sections if not relevant):
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            // Updated: Change the model to a DeepSeek model
-            model: 'deepseek-chat',
+            // Using DeepSeek R1 0528 for suggestions  
+            model: 'deepseek-r1',
             messages: [{ role: 'user', content: suggestionPrompt }],
             max_tokens: 300,
+            temperature: 0.5,
+            stream: false
           }),
         });
 

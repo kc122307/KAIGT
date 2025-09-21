@@ -6,6 +6,7 @@ import { Loader2, Sparkles, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGoalStore } from "@/store/goalStore";
 import { GoalCategory } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
 
 interface GoalSuggestion {
   title: string;
@@ -24,10 +25,26 @@ export const GoalSuggestions = () => {
     setIsLoading(true);
     
     try {
+      // Get the current session for authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to use goal suggestions.",
+          variant: "destructive",
+        });
+        setSuggestions(sampleSuggestions);
+        setIsLoading(false);
+        return;
+      }
+      
       const response = await fetch('https://gfqgjnytfgnpfiquqixt.supabase.co/functions/v1/ai-coach', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcWdqbnl0ZmducGZpcXVxaXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYyMDc0ODgsImV4cCI6MjA2MTc4MzQ4OH0.QHEWlB4k_uka9AZoOHXOCW_tlRahaJcMNY5BAS9yjmI',
         },
         body: JSON.stringify({ 
           message: "Generate 3 personalized goal suggestions for a user focused on productivity and personal development. Format as JSON array with title, description, category, and difficulty fields." 
