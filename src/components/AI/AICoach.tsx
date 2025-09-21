@@ -23,9 +23,19 @@ export const AICoach = ({ conversation, onGoalSuggestion, onModeRecommendation, 
   const { goals, currentUser } = useGoalStore();
 
   const sendMessage = async () => {
-    if (!message.trim()) return;
+    console.log('🚀 AICoach: sendMessage called');
+    
+    if (!message.trim()) {
+      console.log('❌ AICoach: Empty message, returning');
+      return;
+    }
 
     const userMessage = message;
+    console.log('💬 AICoach: User message:', {
+      length: userMessage.length,
+      preview: userMessage.substring(0, 50) + (userMessage.length > 50 ? '...' : '')
+    });
+    
     setMessage("");
     
     const newUserMessage = {
@@ -36,38 +46,44 @@ export const AICoach = ({ conversation, onGoalSuggestion, onModeRecommendation, 
     
     setConversationHistory(prev => [...prev, newUserMessage]);
     setIsLoading(true);
+    
+    console.log('🔄 AICoach: State updated, starting API call...');
 
     try {
       // Get the current session for authentication
+      console.log('🔐 AICoach: Getting user session...');
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
-        console.error('Session error:', sessionError);
+        console.error('❌ AICoach: Session error:', sessionError);
         toast({
           title: "Authentication Error",
           description: "Unable to verify authentication. Please try logging out and back in.",
           variant: "destructive",
         });
+        setIsLoading(false);
         return;
       }
       
       if (!session || !session.access_token) {
-        console.error('No valid session found');
+        console.error('❌ AICoach: No valid session found');
         toast({
           title: "Authentication Required",
           description: "Please log in to use the AI coach.",
           variant: "destructive",
         });
+        setIsLoading(false);
         return;
       }
       
-      console.log('Using session for AI request:', { 
+      console.log('✅ AICoach: Using session for AI request:', { 
         userId: session.user?.id,
         tokenExists: !!session.access_token,
         tokenPreview: session.access_token.substring(0, 20) + '...' 
       });
       
       // Prepare context about user's goals
+      console.log('📊 AICoach: Preparing user context...');
       const userContext = {
         goals: goals.map(g => ({
           title: g.title,
@@ -77,6 +93,25 @@ export const AICoach = ({ conversation, onGoalSuggestion, onModeRecommendation, 
         })),
         recentConversation: conversationHistory.slice(-5)
       };
+      
+      console.log('📋 AICoach: User context prepared:', {
+        goalsCount: userContext.goals.length,
+        recentConversationCount: userContext.recentConversation.length
+      });
+      
+      const requestBody = {
+        message: userMessage,
+        userContext,
+        history: conversationHistory.slice(-10),
+        requestSuggestions: true
+      };
+      
+      console.log('🚀 AICoach: Making API request to Edge Function...', {
+        url: 'https://gfqgjnytfgnpfiquqixt.supabase.co/functions/v1/ai-coach',
+        method: 'POST',
+        hasAuth: !!session.access_token,
+        bodyKeys: Object.keys(requestBody)
+      });
 
       const response = await fetch('https://gfqgjnytfgnpfiquqixt.supabase.co/functions/v1/ai-coach', {
         method: 'POST',
@@ -85,12 +120,14 @@ export const AICoach = ({ conversation, onGoalSuggestion, onModeRecommendation, 
           'Authorization': `Bearer ${session.access_token}`,
           'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcWdqbnl0ZmducGZpcXVxaXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYyMDc0ODgsImV4cCI6MjA2MTc4MzQ4OH0.QHEWlB4k_uka9AZoOHXOCW_tlRahaJcMNY5BAS9yjmI',
         },
-        body: JSON.stringify({ 
-          message: userMessage,
-          userContext,
-          history: conversationHistory.slice(-10),
-          requestSuggestions: true
-        }),
+        body: JSON.stringify(requestBody),
+      });
+      
+      console.log('📊 AICoach: Edge Function response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries())
       });
 
       if (!response.ok) {

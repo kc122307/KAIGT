@@ -22,13 +22,16 @@ export const GoalSuggestions = () => {
   const { addGoal, currentUser } = useGoalStore();
 
   const generateSuggestions = async () => {
+    console.log('✨ GoalSuggestions: generateSuggestions called');
     setIsLoading(true);
     
     try {
       // Get the current session for authentication
+      console.log('🔐 GoalSuggestions: Getting user session...');
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
+        console.error('❌ GoalSuggestions: No session found');
         toast({
           title: "Authentication Required",
           description: "Please log in to use goal suggestions.",
@@ -39,6 +42,7 @@ export const GoalSuggestions = () => {
         return;
       }
       
+      console.log('🚀 GoalSuggestions: Calling Edge Function...');
       const response = await fetch('https://gfqgjnytfgnpfiquqixt.supabase.co/functions/v1/ai-coach', {
         method: 'POST',
         headers: {
@@ -50,6 +54,12 @@ export const GoalSuggestions = () => {
           message: "Generate 3 personalized goal suggestions for a user focused on productivity and personal development. Format as JSON array with title, description, category, and difficulty fields." 
         }),
       });
+      
+      console.log('📊 GoalSuggestions: Edge Function responded with:', response.status, response.statusText);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ GoalSuggestions: API error:', { status: response.status, text: errorText });
+      }
 
       if (!response.ok) {
         throw new Error('Failed to generate suggestions');

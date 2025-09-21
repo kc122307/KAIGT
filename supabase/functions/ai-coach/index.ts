@@ -15,21 +15,45 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log('🚀 AI Coach function started');
+  console.log('Method:', req.method);
+  console.log('URL:', req.url);
+  
   if (req.method === 'OPTIONS') {
+    console.log('✅ CORS preflight request handled');
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     // Get the Authorization header
     const authHeader = req.headers.get('Authorization');
+    console.log('🔐 Auth header present:', !!authHeader);
+    console.log('🔐 Auth header preview:', authHeader ? authHeader.substring(0, 20) + '...' : 'Not provided');
+    
     if (!authHeader) {
+      console.log('❌ No authorization header provided');
       return new Response(
         JSON.stringify({ error: 'No authorization header' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    // Log environment variables (safely)
+    console.log('🔧 Environment check:');
+    console.log('- SUPABASE_URL:', supabaseUrl || 'NOT SET');
+    console.log('- SUPABASE_ANON_KEY present:', !!supabaseAnonKey);
+    console.log('- DEEPSEEK_API_KEY present:', !!deepseekApiKey);
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.log('❌ Missing Supabase environment variables');
+      return new Response(
+        JSON.stringify({ error: 'Server configuration error - missing Supabase credentials' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     // Create a Supabase client with the user's JWT
+    console.log('📋 Creating Supabase client...');
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: {
         headers: {
@@ -39,17 +63,58 @@ serve(async (req) => {
     });
 
     // Verify the user is authenticated
+    console.log('🔍 Verifying user authentication...');
     const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    console.log('📊 Auth verification result:');
+    console.log('- User ID:', user?.id || 'No user');
+    console.log('- Auth error:', authError?.message || 'None');
+    
     if (authError || !user) {
+      console.log('❌ Authentication failed:', authError?.message);
       return new Response(
-        JSON.stringify({ error: 'Authentication failed' }),
+        JSON.stringify({ error: 'Authentication failed', details: authError?.message }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    
+    console.log('✅ User authenticated successfully:', user.id);
 
-    const { message, userContext, history, requestSuggestions } = await req.json();
+    // Parse request body
+    console.log('📋 Parsing request body...');
+    let message, userContext, history, requestSuggestions;
+    
+    try {
+      const requestBody = await req.json();
+      console.log('📊 Request body parsed:', {
+        hasMessage: !!requestBody.message,
+        messageLength: requestBody.message?.length || 0,
+        hasUserContext: !!requestBody.userContext,
+        goalsCount: requestBody.userContext?.goals?.length || 0,
+        historyLength: requestBody.history?.length || 0,
+        requestSuggestions: !!requestBody.requestSuggestions
+      });
+      
+      ({ message, userContext, history, requestSuggestions } = requestBody);
+      
+      if (!message || typeof message !== 'string' || message.trim().length === 0) {
+        console.log('❌ Invalid message provided:', message);
+        return new Response(
+          JSON.stringify({ error: 'Invalid or empty message provided' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+    } catch (parseError) {
+      console.log('❌ Request body parsing failed:', parseError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON in request body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Check for DeepSeek API key (free tier available)
+    console.log('🔑 Checking DeepSeek API key...');
     if (!deepseekApiKey) {
       return new Response(
         JSON.stringify({ 
@@ -84,23 +149,55 @@ serve(async (req) => {
       { role: 'user', content: message }
     ];
 
-    // Updated: Change the fetch URL to DeepSeek's endpoint
-    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        // Updated: Use the new deepseekApiKey for authorization
-        'Authorization': `Bearer ${deepseekApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        // Using DeepSeek R1 0528 (free tier - excellent reasoning model)
-        model: 'deepseek-r1', 
-        messages,
-        max_tokens: 600,
-        temperature: 0.7,
-        stream: false
-      }),
+    // Make DeepSeek API call
+    console.log('🤖 Preparing DeepSeek API request...');
+    console.log('📊 Request details:', {
+      model: 'deepseek-r1',
+      messageCount: messages.length,
+      maxTokens: 600,
+      temperature: 0.7,
+      hasApiKey: !!deepseekApiKey,
+      apiKeyPrefix: deepseekApiKey ? deepseekApiKey.substring(0, 10) + '...' : 'None'
     });
+    
+    console.log('📝 Messages structure:', messages.map((msg, i) => ({
+      index: i,
+      role: msg.role,
+      contentLength: msg.content.length,
+      preview: msg.content.substring(0, 50) + (msg.content.length > 50 ? '...' : '')
+    })));
+    
+    let response;
+    try {
+      console.log('🚀 Making DeepSeek API call...');
+      response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${deepseekApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'deepseek-r1',
+          messages,
+          max_tokens: 600,
+          temperature: 0.7,
+          stream: false
+        }),
+      });
+      
+      console.log('📊 DeepSeek API response status:', response.status, response.statusText);
+      
+    } catch (fetchError) {
+      console.log('❌ DeepSeek API fetch failed:', fetchError);
+      return new Response(
+        JSON.stringify({ 
+          response: `Network error: ${fetchError.message}. Please check your internet connection and try again.`,
+          suggestions: {},
+          debug: { error: 'fetch_failed', details: fetchError.message }
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     const data = await response.json();
     

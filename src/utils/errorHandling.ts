@@ -17,6 +17,7 @@ export const setupGlobalErrorHandling = () => {
 
   // Override console.error to filter extension errors
   const originalConsoleError = console.error;
+  const originalConsoleWarn = console.warn;
   
   console.error = (...args: any[]) => {
     const errorMessage = args.join(' ').toString();
@@ -26,9 +27,27 @@ export const setupGlobalErrorHandling = () => {
       errorMessage.toLowerCase().includes(pattern.toLowerCase())
     );
     
-    // Only log non-extension errors
-    if (!isExtensionError) {
+    // Also check for common GSAP errors
+    const isGSAPError = errorMessage.includes('GSAP target') || 
+                       errorMessage.includes('Invalid scope') ||
+                       errorMessage.includes('not found. https://gsap.com');
+    
+    // Only log non-extension and non-GSAP errors
+    if (!isExtensionError && !isGSAPError) {
       originalConsoleError.apply(console, args);
+    }
+  };
+  
+  // Also override console.warn for GSAP warnings
+  console.warn = (...args: any[]) => {
+    const warnMessage = args.join(' ').toString();
+    
+    const isGSAPWarning = warnMessage.includes('GSAP') || 
+                         warnMessage.includes('Invalid scope') ||
+                         warnMessage.includes('not found');
+    
+    if (!isGSAPWarning) {
+      originalConsoleWarn.apply(console, args);
     }
   };
 
