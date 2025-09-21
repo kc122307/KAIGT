@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useGoalStore } from "../../store/goalStore";
 import { useTheme } from "../ThemeProvider";
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/ui/Logo";
 import {
   Menu,
   Sun,
@@ -13,8 +14,6 @@ import {
   LogOut,
   Plus,
   Search,
-  Target,
-  Sparkles,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -44,15 +43,13 @@ export const Header = ({ toggleSidebar }: HeaderProps) => {
             <Menu className="h-5 w-5" />
           </Button>
           
-          <Link to="/" className="flex items-center gap-2 hover:scale-105 transition-transform duration-200">
-            <div className="relative">
-              <Target className="h-7 w-7 text-white drop-shadow-lg" />
-              <Sparkles className="h-3 w-3 text-yellow-300 absolute -top-1 -right-1 animate-pulse" />
-            </div>
-            <div>
-              <span className="font-bold text-xl text-white drop-shadow-md">Goal Glimpse</span>
-              <p className="text-[10px] text-white/80 leading-none">Achieve Together</p>
-            </div>
+          <Link to="/" className="hover:scale-105 transition-transform duration-200">
+            <Logo 
+              size="lg" 
+              showText={true} 
+              className="drop-shadow-lg" 
+              textClassName="text-white drop-shadow-md" 
+            />
           </Link>
         </div>
         

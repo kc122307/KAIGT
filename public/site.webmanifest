@@ -1,0 +1,26 @@
+{
+  "name": "KAIGT - AI-Powered Goal Achievement",
+  "short_name": "KAIGT",
+  "description": "AI-powered goal tracking and achievement app with intelligent insights, team collaboration, and personalized coaching",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0ea5e9",
+  "theme_color": "#0ea5e9",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/Kaigt.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/Kaigt.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["productivity", "lifestyle", "business"],
+  "lang": "en",
+  "dir": "ltr"
+}
