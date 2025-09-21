@@ -103,6 +103,39 @@ serve(async (req) => {
     });
 
     const data = await response.json();
+    
+    // Enhanced error logging for debugging
+    if (!response.ok) {
+      console.error('DeepSeek API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        data: data,
+        model: 'deepseek-r1',
+        apiKeyExists: !!deepseekApiKey,
+        apiKeyPrefix: deepseekApiKey ? deepseekApiKey.substring(0, 10) + '...' : 'Not set'
+      });
+      
+      return new Response(
+        JSON.stringify({ 
+          response: `DeepSeek API Error (${response.status}): ${data.error?.message || response.statusText}. Please check your API configuration.`,
+          suggestions: {},
+          debug: {
+            status: response.status,
+            error: data.error?.message || 'Unknown error',
+            model: 'deepseek-r1',
+            hasApiKey: !!deepseekApiKey
+          }
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    console.log('DeepSeek API Success:', {
+      model: 'deepseek-r1',
+      responseLength: data.choices?.[0]?.message?.content?.length || 0,
+      usage: data.usage
+    });
+    
     const aiResponse = data.choices?.[0]?.message?.content || 'Sorry, I could not generate a response.';
 
     // Generate contextual suggestions based on the conversation
@@ -142,6 +175,14 @@ Return JSON in this exact format (omit sections if not relevant):
         });
 
         const suggestionData = await suggestionResponse.json();
+        
+        if (!suggestionResponse.ok) {
+          console.error('DeepSeek Suggestions API Error:', {
+            status: suggestionResponse.status,
+            data: suggestionData
+          });
+        }
+        
         const suggestionContent = suggestionData.choices?.[0]?.message?.content;
         
         if (suggestionContent) {
