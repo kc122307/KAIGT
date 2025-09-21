@@ -6,8 +6,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 
-// Updated: Use DEEPSEEK_API_KEY (which is actually OpenRouter API key)
-const openrouterApiKey = Deno.env.get('DEEPSEEK_API_KEY'); // Using same env var name for compatibility
+// Try multiple possible environment variable names for OpenRouter API key
+const openrouterApiKey = Deno.env.get('DEEPSEEK_API_KEY') || 
+                        Deno.env.get('OPENROUTER_API_KEY') ||
+                        Deno.env.get('VITE_OPENROUTER_API_KEY') ||
+                        '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'; // fallback
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -42,7 +45,11 @@ serve(async (req) => {
     console.log('🔧 Environment check:');
     console.log('- SUPABASE_URL:', supabaseUrl || 'NOT SET');
     console.log('- SUPABASE_ANON_KEY present:', !!supabaseAnonKey);
-    console.log('- OPENROUTER_API_KEY present:', !!openrouterApiKey);
+    console.log('- DEEPSEEK_API_KEY present:', !!Deno.env.get('DEEPSEEK_API_KEY'));
+    console.log('- OPENROUTER_API_KEY present:', !!Deno.env.get('OPENROUTER_API_KEY'));
+    console.log('- VITE_OPENROUTER_API_KEY present:', !!Deno.env.get('VITE_OPENROUTER_API_KEY'));
+    console.log('- Final openrouterApiKey present:', !!openrouterApiKey);
+    console.log('- Final openrouterApiKey prefix:', openrouterApiKey ? openrouterApiKey.substring(0, 15) + '...' : 'NOT SET');
     
     if (!supabaseUrl || !supabaseAnonKey) {
       console.log('❌ Missing Supabase environment variables');
