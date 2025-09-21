@@ -150,7 +150,33 @@ export const AICoach = ({ conversation, onGoalSuggestion, onModeRecommendation, 
         throw new Error(`AI API Error (${response.status}): ${errorText}`);
       }
 
-      const data = await response.json();
+      const responseText = await response.text();
+      console.log('📄 AICoach: Raw response text:', responseText);
+      
+      let data;
+      try {
+        data = JSON.parse(responseText);
+        console.log('📊 AICoach: Parsed response data:', data);
+      } catch (parseError) {
+        console.error('❌ AICoach: Failed to parse JSON response:', parseError);
+        console.log('📄 AICoach: Raw response that failed to parse:', responseText);
+        throw new Error('Invalid JSON response from AI service');
+      }
+      
+      console.log('🔍 AICoach: Checking response structure:', {
+        hasResponse: !!data.response,
+        responseType: typeof data.response,
+        responseLength: data.response?.length || 0,
+        responsePreview: data.response?.substring(0, 100) || 'No response content',
+        hasSuggestions: !!data.suggestions,
+        suggestionsKeys: data.suggestions ? Object.keys(data.suggestions) : []
+      });
+      
+      if (!data.response) {
+        console.warn('⚠️ AICoach: No response content in data:', data);
+        throw new Error('Empty response from AI service');
+      }
+      
       const aiResponse = {
         role: 'ai' as const,
         content: data.response,
@@ -158,7 +184,23 @@ export const AICoach = ({ conversation, onGoalSuggestion, onModeRecommendation, 
         suggestions: data.suggestions || {}
       };
       
-      setConversationHistory(prev => [...prev, aiResponse]);
+      console.log('✅ AICoach: Created AI response object:', {
+        contentLength: aiResponse.content.length,
+        hasSuggestions: Object.keys(aiResponse.suggestions).length > 0,
+        suggestionsKeys: Object.keys(aiResponse.suggestions)
+      });
+      
+      setConversationHistory(prev => {
+        const newHistory = [...prev, aiResponse];
+        console.log('📋 AICoach: Updated conversation history:', {
+          totalMessages: newHistory.length,
+          lastMessage: {
+            role: newHistory[newHistory.length - 1].role,
+            contentPreview: newHistory[newHistory.length - 1].content.substring(0, 50)
+          }
+        });
+        return newHistory;
+      });
     } catch (error) {
       console.error('AI Coach error:', error);
       toast({
