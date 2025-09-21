@@ -174,8 +174,17 @@ export const AICoach = ({ conversation, selectedPersonality, onGoalSuggestion, o
         suggestionsKeys: data.suggestions ? Object.keys(data.suggestions) : []
       });
       
-      if (!data.response || data.response === 'Sorry, I could not generate a response.') {
-        console.warn('⚠️ AICoach: Generic or empty response from Edge Function, trying fallback...', data);
+      // Check if Edge Function failed with API key error or generic response
+      const shouldUseFallback = !data.response || 
+                              data.response === 'Sorry, I could not generate a response.' ||
+                              data.response.includes('OpenRouter API Error') ||
+                              data.response.includes('User not found');
+      
+      if (shouldUseFallback) {
+        console.warn('⚠️ AICoach: Edge Function error detected, using client fallback...', {
+          response: data.response,
+          debug: data.debug
+        });
         
         // Fallback: Call OpenRouter directly
         try {
