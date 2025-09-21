@@ -25,8 +25,8 @@ export interface OpenRouterResponse {
   };
 }
 
-// Get OpenRouter API key from environment variables (try multiple possible names)
-const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.DEEPSEEK_API_KEY;
+// Get OpenRouter API key from environment variables - Vercel requires VITE_ prefix for client access
+const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -34,7 +34,10 @@ export const callOpenRouterDirectly = async (request: OpenRouterRequest): Promis
   console.log('🔑 Calling OpenRouter directly from frontend...');
   
   if (!OPENROUTER_API_KEY) {
-    throw new Error('Missing OpenRouter API key. Please check your Vercel environment variables: DEEPSEEK_API_KEY');
+    console.error('OpenRouter API key check:', {
+      VITE_OPENROUTER_API_KEY: import.meta.env.VITE_OPENROUTER_API_KEY ? 'SET' : 'NOT SET'
+    });
+    throw new Error('Missing OpenRouter API key. In Vercel, please set: VITE_OPENROUTER_API_KEY (with VITE_ prefix for client access)');
   }
   
   // Build context-aware prompt with personality
