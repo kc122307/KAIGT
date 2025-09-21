@@ -203,6 +203,7 @@ serve(async (req) => {
     }
 
     const data = await response.json();
+    console.log('📊 OpenRouter raw response data:', data);
     
     // Enhanced error logging for debugging
     if (!response.ok) {
@@ -237,7 +238,22 @@ serve(async (req) => {
       usage: data.usage
     });
     
+    console.log('🔍 Extracting AI response from data:', {
+      hasChoices: !!data.choices,
+      choicesLength: data.choices?.length || 0,
+      firstChoice: data.choices?.[0] || null,
+      hasMessage: !!data.choices?.[0]?.message,
+      hasContent: !!data.choices?.[0]?.message?.content,
+      contentPreview: data.choices?.[0]?.message?.content?.substring(0, 100) || 'No content'
+    });
+    
     const aiResponse = data.choices?.[0]?.message?.content || 'Sorry, I could not generate a response.';
+    
+    console.log('🤖 Final AI response:', {
+      length: aiResponse.length,
+      preview: aiResponse.substring(0, 100),
+      isGeneric: aiResponse === 'Sorry, I could not generate a response.'
+    });
 
     // Generate contextual suggestions based on the conversation
     let suggestions = {};

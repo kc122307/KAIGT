@@ -2,11 +2,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Sparkles, Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Loader2, Sparkles, Plus, Target } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGoalStore } from "@/store/goalStore";
 import { GoalCategory } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
+import { callOpenRouterDirectly } from "@/services/openrouterService";
 
 interface GoalSuggestion {
   title: string;
@@ -18,6 +21,7 @@ interface GoalSuggestion {
 export const GoalSuggestions = () => {
   const [suggestions, setSuggestions] = useState<GoalSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [customInput, setCustomInput] = useState('');
   const { toast } = useToast();
   const { addGoal, currentUser } = useGoalStore();
 
@@ -42,36 +46,51 @@ export const GoalSuggestions = () => {
         return;
       }
       
-      console.log('🚀 GoalSuggestions: Calling Edge Function...');
-      const response = await fetch('https://gfqgjnytfgnpfiquqixt.supabase.co/functions/v1/ai-coach', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcWdqbnl0ZmducGZpcXVxaXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYyMDc0ODgsImV4cCI6MjA2MTc4MzQ4OH0.QHEWlB4k_uka9AZoOHXOCW_tlRahaJcMNY5BAS9yjmI',
-        },
-        body: JSON.stringify({ 
-          message: "Generate 3 personalized goal suggestions for a user focused on productivity and personal development. Format as JSON array with title, description, category, and difficulty fields." 
-        }),
+      console.log('🚀 GoalSuggestions: Using OpenRouter fallback...');
+      
+      const baseContext = customInput.trim() 
+        ? `focused on "${customInput.trim()}"` 
+        : 'focused on productivity and personal development';
+      
+      const prompt = `Generate exactly 3 personalized goal suggestions for a user ${baseContext}. 
+      
+      ${customInput.trim() ? `The user is specifically interested in: "${customInput.trim()}"` : ''}
+      
+      Return ONLY a JSON array with this exact format (no additional text or formatting):
+      [
+        {
+          "title": "Goal Title",
+          "description": "Brief description of the goal",
+          "category": "Personal", 
+          "difficulty": "Easy"
+        }
+      ]
+      
+      Categories must be one of: Personal, Work, Health, Education, Finance, Social
+      Difficulty must be one of: Easy, Medium, Hard
+      
+      Make the suggestions relevant to the user's interest and provide actionable, specific goals.`;
+      
+      const response = await callOpenRouterDirectly({
+        message: prompt,
+        userContext: { goals: [] },
+        history: []
       });
       
-      console.log('📊 GoalSuggestions: Edge Function responded with:', response.status, response.statusText);
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ GoalSuggestions: API error:', { status: response.status, text: errorText });
-      }
-
-      if (!response.ok) {
-        throw new Error('Failed to generate suggestions');
-      }
-
-      const data = await response.json();
+      console.log('📊 GoalSuggestions: AI responded with:', response.response);
       
-      // Try to parse the AI response as JSON, fallback to sample data if parsing fails
+      // Try to parse the AI response as JSON
       try {
-        const parsedSuggestions = JSON.parse(data.response);
-        setSuggestions(Array.isArray(parsedSuggestions) ? parsedSuggestions : sampleSuggestions);
-      } catch {
+        const parsedSuggestions = JSON.parse(response.response);
+        if (Array.isArray(parsedSuggestions) && parsedSuggestions.length > 0) {
+          setSuggestions(parsedSuggestions);
+          console.log('✅ GoalSuggestions: Successfully parsed AI suggestions:', parsedSuggestions);
+        } else {
+          console.log('⚠️ GoalSuggestions: AI response not a valid array, using sample data');
+          setSuggestions(sampleSuggestions);
+        }
+      } catch (parseError) {
+        console.log('⚠️ GoalSuggestions: Failed to parse AI response, using sample data:', parseError);
         setSuggestions(sampleSuggestions);
       }
       
@@ -145,26 +164,66 @@ export const GoalSuggestions = () => {
     }
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !isLoading) {
+      generateSuggestions();
+    }
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Custom Input Section */}
+      <Card className="border-dashed border-2">
+        <CardContent className="p-4">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Target className="h-4 w-4 text-primary" />
+              <Label htmlFor="goal-input" className="text-sm font-medium">
+                What would you like to achieve? (Optional)
+              </Label>
+            </div>
+            <Input
+              id="goal-input"
+              type="text"
+              placeholder="e.g., Learn dancing, Improve fitness, Start a business, Learn programming..."
+              value={customInput}
+              onChange={(e) => setCustomInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="text-sm"
+            />
+            <p className="text-xs text-muted-foreground">
+              💡 Leave blank for general productivity suggestions, or specify your interest for personalized goals
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+      
+      {/* Generate Button */}
       <div className="text-center">
         <Button 
           onClick={generateSuggestions} 
           disabled={isLoading}
-          className="gap-2"
+          size="lg"
+          className="gradient-primary gap-2 hover:scale-105 transition-all duration-300"
         >
           {isLoading ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Generating...
+              Generating Suggestions...
             </>
           ) : (
             <>
               <Sparkles className="h-4 w-4" />
-              Get Goal Suggestions
+              Generate {customInput.trim() ? 'Personalized' : 'General'} Goals
             </>
           )}
         </Button>
+        
+        {customInput.trim() && (
+          <p className="text-xs text-muted-foreground mt-2">
+            🎯 Creating goals for: <span className="font-medium">"{customInput.trim()}"</span>
+          </p>
+        )}
       </div>
 
       <div className="space-y-3">

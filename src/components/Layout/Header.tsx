@@ -37,21 +37,21 @@ export const Header = ({ toggleSidebar }: HeaderProps) => {
   const unreadNotifications = notifications.filter(n => !n.is_read).length;
   
   return (
-    <header className="border-b sticky top-0 z-30 bg-background">
+    <header className="header-gradient border-b border-white/20 sticky top-0 z-30 backdrop-blur-lg">
       <div className="container mx-auto px-4 flex h-16 items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={toggleSidebar} className="lg:hidden">
             <Menu className="h-5 w-5" />
           </Button>
           
-          <Link to="/" className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2 hover:scale-105 transition-transform duration-200">
             <div className="relative">
-              <Target className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
-              <Sparkles className="h-3 w-3 text-yellow-500 absolute -top-1 -right-1" />
+              <Target className="h-7 w-7 text-white drop-shadow-lg" />
+              <Sparkles className="h-3 w-3 text-yellow-300 absolute -top-1 -right-1 animate-pulse" />
             </div>
             <div>
-              <span className="font-bold text-lg bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">KAIGT</span>
-              <p className="text-[10px] text-muted-foreground leading-none">AI Goal Companion</p>
+              <span className="font-bold text-xl text-white drop-shadow-md">Goal Glimpse</span>
+              <p className="text-[10px] text-white/80 leading-none">Achieve Together</p>
             </div>
           </Link>
         </div>
@@ -74,29 +74,29 @@ export const Header = ({ toggleSidebar }: HeaderProps) => {
             variant="ghost" 
             size="icon"
             onClick={() => setShowSearch(!showSearch)}
-            className="md:flex hidden"
+            className="md:flex hidden text-white hover:bg-white/20 transition-all duration-200"
           >
             <Search className="h-5 w-5" />
           </Button>
           
           <Link to="/goals">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 transition-all duration-200">
               <Plus className="h-5 w-5" />
             </Button>
           </Link>
           
           <Link to="/notifications">
-            <Button variant="ghost" size="icon" className="relative">
+            <Button variant="ghost" size="icon" className="relative text-white hover:bg-white/20 transition-all duration-200">
               <Bell className="h-5 w-5" />
               {unreadNotifications > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]">
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] pulse-success">
                   {unreadNotifications}
                 </span>
               )}
             </Button>
           </Link>
           
-          <Button variant="ghost" size="icon" onClick={toggleDarkMode}>
+          <Button variant="ghost" size="icon" onClick={toggleDarkMode} className="text-white hover:bg-white/20 transition-all duration-200">
             {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
           

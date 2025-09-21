@@ -13,9 +13,9 @@ interface GoalCardProps {
 
 export const GoalCard = ({ goal, onClick }: GoalCardProps) => {
   const statusColors = {
-    'Completed': 'bg-green-500',
-    'In-Progress': 'bg-blue-500',
-    'Pending': 'bg-yellow-500'
+    'Completed': 'bg-gradient-to-r from-green-500 to-emerald-500',
+    'In-Progress': 'bg-gradient-to-r from-blue-500 to-cyan-500', 
+    'Pending': 'bg-gradient-to-r from-yellow-500 to-amber-500'
   };
 
   const categoryIcons = {
@@ -33,9 +33,9 @@ export const GoalCard = ({ goal, onClick }: GoalCardProps) => {
   return (
     <Card 
       onClick={onClick}
-      className="goal-card cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 transform overflow-hidden"
+      className="goal-card cursor-pointer hover:shadow-xl hover:scale-[1.03] transition-all duration-300 transform overflow-hidden border-0 shadow-lg"
     >
-      <div className={cn("w-full h-1", statusColors[goal.status])} />
+      <div className={cn("w-full h-2", statusColors[goal.status])} />
       
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
@@ -63,7 +63,9 @@ export const GoalCard = ({ goal, onClick }: GoalCardProps) => {
             <span>Progress</span>
             <span className="font-medium">{goal.progress}%</span>
           </div>
-          <Progress value={goal.progress} className="h-2 transition-all duration-500" />
+          <Progress value={goal.progress} className="h-3 transition-all duration-500">
+            <div className="progress-gradient h-full rounded-full" style={{ width: `${goal.progress}%` }} />
+          </Progress>
         </div>
       </CardContent>
       

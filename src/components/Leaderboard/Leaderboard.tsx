@@ -105,10 +105,27 @@ export const Leaderboard = () => {
     return b.streakCount - a.streakCount;
   });
   
-  // Get current user's ranking
+  // Get current user's ranking and create display list
   const currentUserRank = currentUser 
     ? sortedUsers.findIndex(user => user.id === currentUser.id) + 1
     : null;
+    
+  // Create the display list: top 10 + current user if not in top 10
+  const getDisplayUsers = () => {
+    const top10 = sortedUsers.slice(0, 10);
+    
+    // If current user is not in top 10, add them at the end
+    if (currentUser && currentUserRank && currentUserRank > 10) {
+      const currentUserData = sortedUsers.find(user => user.id === currentUser.id);
+      if (currentUserData) {
+        return [...top10, currentUserData];
+      }
+    }
+    
+    return top10;
+  };
+  
+  const displayUsers = getDisplayUsers();
   
   if (isLoading) {
     return (
@@ -148,39 +165,64 @@ export const Leaderboard = () => {
               No leaderboard data available
             </div>
           ) : (
-            sortedUsers.slice(0, 5).map((user, index) => (
-              <div 
-                key={user.id} 
-                className={`flex items-center justify-between py-2 ${
-                  index !== Math.min(sortedUsers.length - 1, 4) ? "border-b" : ""
-                } ${currentUser && user.id === currentUser.id ? "bg-muted/50 rounded-md px-2" : ""}`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <div className="h-8 w-8 rounded-full overflow-hidden">
-                      <img 
-                        src={user.avatar} 
-                        alt={user.name} 
-                        className="h-full w-full object-cover"
-                      />
+            displayUsers.map((user, index) => {
+              const isCurrentUser = currentUser && user.id === currentUser.id;
+              const actualRank = sortedUsers.findIndex(u => u.id === user.id) + 1;
+              const isTop10 = actualRank <= 10;
+              const isLastItem = index === displayUsers.length - 1;
+              
+              return (
+                <div 
+                  key={user.id} 
+                  className={`flex items-center justify-between py-2 transition-colors duration-200 ${
+                    !isLastItem ? "border-b" : ""
+                  } ${
+                    isCurrentUser 
+                      ? "bg-blue-50 hover:bg-blue-100 dark:bg-blue-950 dark:hover:bg-blue-900 rounded-md px-2 border-l-4 border-blue-500" 
+                      : "hover:bg-muted/30"
+                  } ${
+                    !isTop10 && isCurrentUser ? "mt-2 pt-4 border-t-2 border-dashed border-muted-foreground/30" : ""
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <div className="h-8 w-8 rounded-full overflow-hidden">
+                        <img 
+                          src={user.avatar} 
+                          alt={user.name} 
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      {actualRank === 1 && (
+                        <span className="absolute -top-1 -right-1">
+                          <Award className="h-4 w-4 text-yellow-500" />
+                        </span>
+                      )}
                     </div>
-                    {index === 0 && (
-                      <span className="absolute -top-1 -right-1">
-                        <Award className="h-4 w-4 text-yellow-500" />
-                      </span>
-                    )}
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium">{user.name}</p>
+                        {isCurrentUser && (
+                          <span className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-1.5 py-0.5 rounded-full font-medium">
+                            You
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{user.completedGoals} goals completed</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium">{user.name}</p>
-                    <p className="text-xs text-muted-foreground">{user.completedGoals} goals completed</p>
+                  <div className="flex items-center gap-2">
+                    <div className="text-right">
+                      <div className="text-xs text-muted-foreground">#{actualRank}</div>
+                      <div className="flex items-center gap-1">
+                        <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                        <span className="font-semibold">{user.streakCount}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                  <span className="font-semibold">{user.streakCount}</span>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </CardContent>
       </Card>

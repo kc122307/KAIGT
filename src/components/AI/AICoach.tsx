@@ -7,15 +7,17 @@ import { Loader2, Send, Volume2, Copy, ThumbsUp, ThumbsDown, Target, Bot, FileTe
 import { useToast } from "@/hooks/use-toast";
 import { useGoalStore } from "@/store/goalStore";
 import { supabase } from "@/integrations/supabase/client";
+import { callOpenRouterDirectly } from "@/services/openrouterService";
 
 interface AICoachProps {
   conversation?: any;
+  selectedPersonality?: any;
   onGoalSuggestion?: (suggestion: any) => void;
   onModeRecommendation?: (mode: any) => void;
-  onTemplateRecommendation?: (template: any) => void;
+  onConversationSave?: (title: string, preview: string, category: string) => void;
 }
 
-export const AICoach = ({ conversation, onGoalSuggestion, onModeRecommendation, onTemplateRecommendation }: AICoachProps) => {
+export const AICoach = ({ conversation, selectedPersonality, onGoalSuggestion, onModeRecommendation, onConversationSave }: AICoachProps) => {
   const [message, setMessage] = useState("");
   const [conversationHistory, setConversationHistory] = useState<Array<{role: 'user' | 'ai', content: string, timestamp: Date, suggestions?: any}>>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -172,9 +174,60 @@ export const AICoach = ({ conversation, onGoalSuggestion, onModeRecommendation, 
         suggestionsKeys: data.suggestions ? Object.keys(data.suggestions) : []
       });
       
-      if (!data.response) {
-        console.warn('⚠️ AICoach: No response content in data:', data);
-        throw new Error('Empty response from AI service');
+      if (!data.response || data.response === 'Sorry, I could not generate a response.') {
+        console.warn('⚠️ AICoach: Generic or empty response from Edge Function, trying fallback...', data);
+        
+        // Fallback: Call OpenRouter directly
+        try {
+          console.log('🔄 AICoach: Attempting direct OpenRouter fallback...');
+          // Apply personality context
+          const contextualMessage = userMessage;
+          
+          const fallbackResponse = await callOpenRouterDirectly({
+            message: contextualMessage,
+            userContext: {
+              ...userContext,
+              personality: selectedPersonality?.prompt || null
+            },
+            history: conversationHistory.slice(-10)
+          });
+          
+          console.log('✅ AICoach: Fallback successful:', fallbackResponse);
+          
+          const aiResponse = {
+            role: 'ai' as const,
+            content: fallbackResponse.response,
+            timestamp: new Date(),
+            suggestions: fallbackResponse.suggestions || {}
+          };
+          
+          console.log('🎉 AICoach: Using fallback response:', {
+            contentLength: aiResponse.content.length,
+            hasSuggestions: Object.keys(aiResponse.suggestions).length > 0
+          });
+          
+          setConversationHistory(prev => {
+            const newHistory = [...prev, aiResponse];
+            
+            // Save conversation to history if this is the first exchange
+            if (onConversationSave && newHistory.length === 2) {
+              const title = userMessage.length > 30 ? userMessage.substring(0, 30) + '...' : userMessage;
+              const preview = aiResponse.content.length > 100 ? aiResponse.content.substring(0, 100) + '...' : aiResponse.content;
+              const category = selectedPersonality?.name.toLowerCase().includes('coach') ? 'productivity' : 
+                             selectedPersonality?.name.toLowerCase().includes('goal') ? 'goals' : 
+                             'general';
+              
+              onConversationSave(title, preview, category);
+            }
+            
+            return newHistory;
+          });
+          return; // Exit early, we're done
+          
+        } catch (fallbackError) {
+          console.error('❌ AICoach: Fallback also failed:', fallbackError);
+          throw new Error('Both Edge Function and fallback failed');
+        }
       }
       
       const aiResponse = {

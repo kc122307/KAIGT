@@ -24,32 +24,35 @@ export const Stats = () => {
       title: "Completed",
       value: completedGoals,
       icon: Check,
-      color: "text-green-500",
+      color: "text-green-600",
+      cardClass: "stat-card-green",
     },
     {
       title: "In Progress",
       value: inProgressGoals,
       icon: Clock,
-      color: "text-blue-500",
+      color: "text-blue-600", 
+      cardClass: "stat-card-blue",
     },
     {
       title: "Pending",
       value: pendingGoals,
       icon: Hourglass,
-      color: "text-yellow-500",
+      color: "text-teal-600",
+      cardClass: "stat-card-teal",
     },
   ];
   
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {stats.map((stat, index) => (
-        <Card key={stat.title} className="stats-card hover:scale-105 transition-transform duration-200">
-          <CardContent className="p-4 flex justify-between items-center">
+        <Card key={stat.title} className={`${stat.cardClass} hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl border-0`}>
+          <CardContent className="p-6 flex justify-between items-center">
             <div>
-              <p className="text-sm text-muted-foreground">{stat.title}</p>
-              <p className="text-2xl font-bold">{stat.value}</p>
+              <p className="text-sm font-medium opacity-75">{stat.title}</p>
+              <p className="text-3xl font-bold mt-1">{stat.value}</p>
             </div>
-            <div className={`rounded-full p-2 ${stat.color} bg-muted/30`}>
+            <div className={`rounded-full p-3 ${stat.color} bg-white/20 backdrop-blur-sm float-animation`}>
               <stat.icon className={`h-6 w-6 ${stat.color}`} />
             </div>
           </CardContent>

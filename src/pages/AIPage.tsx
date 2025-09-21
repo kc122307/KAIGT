@@ -4,11 +4,9 @@ import { AICoach } from "@/components/AI/AICoach";
 import { GoalSuggestions } from "@/components/AI/GoalSuggestions";
 import { ConversationHistory } from "@/components/AI/ConversationHistory";
 import { PersonalityModes } from "@/components/AI/PersonalityModes";
-import { SmartTemplates } from "@/components/AI/SmartTemplates";
-import { VoiceInterface } from "@/components/AI/VoiceInterface";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, Target, History, Bot, FileText, Mic } from "lucide-react";
+import { Brain, Target, History, Bot } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGSAP } from "../hooks/useGSAP";
 
@@ -33,21 +31,34 @@ const AIPage = () => {
     console.log('Loaded conversation:', conversation);
   };
 
-  const handleTemplateSelect = (template) => {
-    setActiveTab("coach");
+  const handleConversationSave = (title, preview, category) => {
+    // Save to localStorage
+    const savedConversations = localStorage.getItem('ai-conversations');
+    let conversations = [];
+    if (savedConversations) {
+      try {
+        conversations = JSON.parse(savedConversations);
+      } catch (error) {
+        console.error('Error parsing saved conversations:', error);
+      }
+    }
+    
+    const newConversation = {
+      id: Date.now().toString(),
+      title,
+      preview,
+      timestamp: new Date(),
+      messageCount: 2, // User message + AI response
+      category
+    };
+    
+    const updatedConversations = [newConversation, ...conversations].slice(0, 10);
+    localStorage.setItem('ai-conversations', JSON.stringify(updatedConversations));
+    
     toast({
-      title: "Template Selected",
-      description: `Using ${template.title} template in your coaching session.`,
+      title: "Conversation Saved",
+      description: "Your conversation has been saved to history.",
     });
-    console.log('Selected template:', template);
-  };
-
-  const handleVoiceTranscription = (text) => {
-    console.log('Voice transcription:', text);
-  };
-
-  const handleSpeakText = (text) => {
-    console.log('Speaking text:', text);
   };
 
   const handleGoalSuggestion = (suggestion) => {
@@ -66,14 +77,6 @@ const AIPage = () => {
     });
   };
 
-  const handleTemplateRecommendation = (template) => {
-    setActiveTab("templates");
-    toast({
-      title: "Template Suggested",
-      description: `The AI suggests using the ${template.title} template.`,
-    });
-  };
-
   return (
     <div ref={containerRef} className="space-y-6">
       <div className="flex items-center gap-2 mb-6 scroll-fade">
@@ -83,14 +86,14 @@ const AIPage = () => {
       
       <div className="scroll-fade">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="coach" className="flex items-center gap-2">
               <Brain className="h-4 w-4" />
-              Coach
+              AI Coach
             </TabsTrigger>
             <TabsTrigger value="goals" className="flex items-center gap-2">
               <Target className="h-4 w-4" />
-              Goals
+              Goal Suggestions
             </TabsTrigger>
             <TabsTrigger value="history" className="flex items-center gap-2">
               <History className="h-4 w-4" />
@@ -98,15 +101,7 @@ const AIPage = () => {
             </TabsTrigger>
             <TabsTrigger value="personality" className="flex items-center gap-2">
               <Bot className="h-4 w-4" />
-              Modes
-            </TabsTrigger>
-            <TabsTrigger value="templates" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Templates
-            </TabsTrigger>
-            <TabsTrigger value="voice" className="flex items-center gap-2">
-              <Mic className="h-4 w-4" />
-              Voice
+              Personality
             </TabsTrigger>
           </TabsList>
 
@@ -126,9 +121,10 @@ const AIPage = () => {
               <CardContent>
                 <AICoach 
                   conversation={currentConversation}
+                  selectedPersonality={selectedPersonality}
                   onGoalSuggestion={handleGoalSuggestion}
                   onModeRecommendation={handleModeRecommendation}
-                  onTemplateRecommendation={handleTemplateRecommendation}
+                  onConversationSave={handleConversationSave}
                 />
               </CardContent>
             </Card>
@@ -163,20 +159,6 @@ const AIPage = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="templates" className="space-y-6">
-            <div className="scroll-fade">
-              <SmartTemplates onTemplateSelect={handleTemplateSelect} />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="voice" className="space-y-6">
-            <div className="scroll-fade">
-              <VoiceInterface 
-                onTranscription={handleVoiceTranscription}
-                onSpeakText={handleSpeakText}
-              />
-            </div>
-          </TabsContent>
         </Tabs>
       </div>
     </div>

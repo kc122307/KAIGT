@@ -49,21 +49,26 @@ export const Sidebar = ({ open }: SidebarProps) => {
   };
   
   return (
-    <div className="flex flex-col h-full bg-background border-r p-4">
+    <div className="flex flex-col h-full sidebar-gradient border-r border-white/20 p-4 backdrop-blur-sm">
       {/* Profile section */}
       {currentUser && (
-        <div className="flex items-center gap-3 mb-6 pb-4 border-b">
-          <div className="h-10 w-10 rounded-full overflow-hidden bg-muted">
-            <img 
-              src={currentUser.avatar} 
-              alt={currentUser.name}
-              className="h-full w-full object-cover"
-            />
-          </div>
-          <div>
-            <div className="font-medium">{currentUser.name}</div>
-            <div className="text-xs text-muted-foreground">
-              {completedGoalsCount} goals completed
+        <div className="glass-card p-4 mb-6 rounded-xl">
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-full overflow-hidden bg-gradient-to-br from-blue-400 to-teal-500 p-0.5">
+              <div className="h-full w-full rounded-full overflow-hidden bg-white">
+                <img 
+                  src={currentUser.avatar} 
+                  alt={currentUser.name}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            </div>
+            <div className="flex-1">
+              <div className="font-semibold text-sm">{currentUser.name}</div>
+              <div className="text-xs opacity-75 flex items-center gap-1">
+                <Trophy className="h-3 w-3" />
+                {completedGoalsCount} goals achieved
+              </div>
             </div>
           </div>
         </div>
@@ -74,13 +79,16 @@ export const Sidebar = ({ open }: SidebarProps) => {
         {navItems.map(item => (
           <Link key={item.path} to={item.path}>
             <Button
-              variant={location.pathname === item.path ? "secondary" : "ghost"}
-              className={cn("w-full justify-start", { 
-                'bg-secondary': location.pathname === item.path 
-              })}
+              variant="ghost"
+              className={cn(
+                "w-full justify-start transition-all duration-200 hover:scale-105 hover:bg-white/10",
+                location.pathname === item.path 
+                  ? "bg-white/20 shadow-lg backdrop-blur-sm border border-white/30" 
+                  : "hover:bg-white/5"
+              )}
             >
               {item.icon}
-              <span className="ml-2">{item.title}</span>
+              <span className="ml-2 font-medium">{item.title}</span>
             </Button>
           </Link>
         ))}

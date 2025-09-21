@@ -88,7 +88,7 @@ const LandingPage = () => {
     {
       name: "Michael Chen",
       role: "Entrepreneur",
-      content: "KAIGT's smart templates and goal suggestions saved me hours of planning. The AI understands my work style and suggests perfectly tailored goals.",
+      content: "Goal Glimpse's smart templates and goal suggestions saved me hours of planning. The AI understands my work style and suggests perfectly tailored goals.",
       rating: 5,
       avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80"
     },
@@ -109,26 +109,26 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-blue-900 dark:to-indigo-900">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-teal-50 to-cyan-50 dark:from-slate-900 dark:via-blue-900 dark:to-teal-900">
       {/* Header */}
-      <header className="border-b bg-white/80 dark:bg-slate-900/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-slate-900/60 sticky top-0 z-50">
+      <header className="header-gradient border-b border-white/20 backdrop-blur sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="relative">
-              <Target className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
-              <Sparkles className="h-4 w-4 text-yellow-500 absolute -top-1 -right-1" />
+              <Target className="h-8 w-8 text-white drop-shadow-lg" />
+              <Sparkles className="h-4 w-4 text-yellow-300 absolute -top-1 -right-1 animate-pulse" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">KAIGT</h1>
-              <p className="text-xs text-muted-foreground">AI-Powered Goal Companion</p>
+              <h1 className="text-2xl font-bold text-white drop-shadow-md">Goal Glimpse</h1>
+              <p className="text-xs text-white/80">Achieve Together</p>
             </div>
           </div>
           <div className="flex items-center space-x-4">
             <Link to="/login">
-              <Button variant="ghost" className="hover:bg-indigo-50 dark:hover:bg-indigo-900">Login</Button>
+              <Button variant="ghost" className="text-white hover:bg-white/20 transition-all duration-200">Login</Button>
             </Link>
             <Link to="/login">
-              <Button className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700">Get Started</Button>
+              <Button className="bg-white text-blue-600 hover:bg-blue-50 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">Get Started</Button>
             </Link>
           </div>
         </div>
@@ -136,21 +136,21 @@ const LandingPage = () => {
 
       {/* Hero Section */}
       <section className="py-24 px-4 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/10 to-purple-600/10 dark:from-indigo-400/10 dark:to-purple-400/10"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-teal-600/10 dark:from-blue-400/10 dark:to-teal-400/10"></div>
         <div className="container mx-auto text-center relative">
           <div className="max-w-5xl mx-auto">
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-200/50 dark:border-indigo-800/50 rounded-full px-4 py-2 mb-8">
-              <Sparkles className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-              <span className="text-sm font-medium text-indigo-700 dark:text-indigo-300">Powered by Advanced AI</span>
+            <div className="inline-flex items-center gap-2 glass-card border border-white/20 rounded-full px-6 py-3 mb-8">
+              <Sparkles className="h-4 w-4 text-blue-600 dark:text-blue-400 animate-pulse" />
+              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Powered by Advanced AI</span>
             </div>
             
             <h2 className="text-6xl md:text-7xl font-bold mb-8 leading-tight">
-              <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-teal-600 bg-clip-text text-transparent">
-                KAIGT
+              <span className="bg-gradient-to-r from-blue-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">
+                Goal Glimpse
               </span>
               <br />
               <span className="text-slate-800 dark:text-slate-200 text-4xl md:text-5xl">
-                Your AI-Powered Goal Companion
+                Achieve Together with AI
               </span>
             </h2>
             
@@ -161,13 +161,13 @@ const LandingPage = () => {
             
             <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
               <Link to="/login">
-                <Button size="lg" className="text-lg px-10 py-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all">
+                <Button size="lg" className="gradient-primary text-lg px-10 py-6 shadow-lg hover:shadow-xl">
                   Start Your AI Journey
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
               <Link to="/login">
-                <Button variant="outline" size="lg" className="text-lg px-10 py-6 border-2 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900">
+                <Button variant="outline" size="lg" className="text-lg px-10 py-6 border-2 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900 transition-all duration-300">
                   Login to Continue
                 </Button>
               </Link>
@@ -175,11 +175,11 @@ const LandingPage = () => {
             
             {/* Hero Image */}
             <div className="relative max-w-5xl mx-auto">
-              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-2xl blur-3xl"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-teal-500/20 rounded-2xl blur-3xl"></div>
               <img 
                 src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=80" 
-                alt="KAIGT AI-powered goal tracking dashboard"
-                className="rounded-2xl shadow-2xl w-full h-auto relative z-10 border border-white/20"
+                alt="Goal Glimpse AI-powered goal tracking dashboard"
+                className="rounded-2xl shadow-2xl w-full h-auto relative z-10 border border-white/20 hover:scale-[1.02] transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background/20 to-transparent rounded-2xl z-20"></div>
             </div>
@@ -188,15 +188,15 @@ const LandingPage = () => {
       </section>
 
       {/* Core AI Features Section */}
-      <section className="py-24 px-4 bg-white/50 dark:bg-slate-800/50">
+      <section className="py-24 px-4 bg-gradient-to-br from-white/70 to-blue-50/70 dark:bg-slate-800/50 backdrop-blur-sm">
         <div className="container mx-auto">
           <div className="text-center mb-20">
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-200/50 dark:border-emerald-800/50 rounded-full px-4 py-2 mb-6">
-              <Brain className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-              <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Core AI Features</span>
+            <div className="inline-flex items-center gap-2 glass-card border border-white/20 rounded-full px-6 py-3 mb-6">
+              <Brain className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+              <span className="text-sm font-medium text-teal-700 dark:text-teal-300">Core AI Features</span>
             </div>
             <h3 className="text-4xl md:text-5xl font-bold mb-6 text-slate-800 dark:text-slate-200">
-              Your Personal <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">AI Assistant</span>
+              Your Personal <span className="bg-gradient-to-r from-teal-600 to-blue-600 bg-clip-text text-transparent">AI Assistant</span>
             </h3>
             <p className="text-xl text-slate-600 dark:text-slate-400 max-w-3xl mx-auto">
               Experience the power of AI with our comprehensive suite of intelligent tools designed to maximize your productivity and goal achievement.
@@ -205,9 +205,9 @@ const LandingPage = () => {
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {coreFeatures.map((feature, index) => (
-              <Card key={index} className="group hover:shadow-2xl transition-all duration-300 border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur">
+              <Card key={index} className="group glass-card hover:shadow-2xl hover:scale-105 transition-all duration-300 border-0">
                 <CardContent className="pt-8 pb-6 text-center">
-                  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-r ${feature.gradient} mx-auto mb-6 flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-r ${feature.gradient} mx-auto mb-6 flex items-center justify-center group-hover:scale-110 transition-transform float-animation`}>
                     <feature.icon className="h-8 w-8 text-white" />
                   </div>
                   <h4 className="text-xl font-bold mb-3 text-slate-800 dark:text-slate-200">{feature.title}</h4>
@@ -349,25 +349,26 @@ const LandingPage = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
-        <div className="container mx-auto text-center">
+      <section className="py-24 px-4 bg-gradient-to-r from-blue-600 via-teal-600 to-cyan-600 text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-teal-500/20"></div>
+        <div className="container mx-auto text-center relative">
           <div className="max-w-4xl mx-auto">
-            <Sparkles className="h-16 w-16 mx-auto mb-8 text-yellow-300" />
+            <Sparkles className="h-16 w-16 mx-auto mb-8 text-yellow-300 animate-pulse" />
             <h3 className="text-4xl md:text-5xl font-bold mb-8 leading-tight">
               Ready to Transform Your Goals with AI?
             </h3>
             <p className="text-xl mb-12 opacity-90 max-w-2xl mx-auto">
-              Join thousands of successful individuals who have achieved their dreams with KAIGT's comprehensive AI-powered goal tracking and coaching platform.
+              Join thousands of successful individuals who have achieved their dreams with Goal Glimpse's comprehensive AI-powered goal tracking and coaching platform.
             </p>
             <div className="flex flex-col sm:flex-row gap-6 justify-center">
               <Link to="/login">
-                <Button size="lg" className="text-lg px-10 py-6 bg-white text-indigo-600 hover:bg-gray-100 shadow-lg hover:shadow-xl transition-all">
+                <Button size="lg" className="text-lg px-10 py-6 bg-white text-blue-600 hover:bg-blue-50 shadow-lg hover:shadow-xl transition-all hover:scale-105">
                   Create Free Account
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
               <Link to="/login">
-                <Button variant="outline" size="lg" className="text-lg px-10 py-6 border-2 border-white text-white hover:bg-white hover:text-indigo-600">
+                <Button variant="outline" size="lg" className="text-lg px-10 py-6 border-2 border-white text-white hover:bg-white hover:text-blue-600 transition-all duration-300">
                   Sign In
                 </Button>
               </Link>
@@ -377,21 +378,21 @@ const LandingPage = () => {
       </section>
 
       {/* Footer */}
-      <footer className="border-t py-12 px-4 bg-slate-900 text-white">
+      <footer className="border-t py-12 px-4 bg-gradient-to-r from-slate-900 to-blue-900 text-white">
         <div className="container mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="flex items-center space-x-3 mb-4 md:mb-0">
               <div className="relative">
-                <Target className="h-6 w-6 text-indigo-400" />
-                <Sparkles className="h-3 w-3 text-yellow-400 absolute -top-1 -right-1" />
+                <Target className="h-6 w-6 text-blue-400" />
+                <Sparkles className="h-3 w-3 text-yellow-400 absolute -top-1 -right-1 animate-pulse" />
               </div>
               <div>
-                <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">KAIGT</span>
-                <p className="text-xs text-slate-400">AI-Powered Goal Companion</p>
+                <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-teal-400 bg-clip-text text-transparent">Goal Glimpse</span>
+                <p className="text-xs text-slate-400">Achieve Together</p>
               </div>
             </div>
             <div className="text-slate-400">
-              © 2025 KAIGT – Your AI-Powered Goal Companion. All rights reserved.
+              © 2025 Goal Glimpse – Achieve Together with AI. All rights reserved.
             </div>
           </div>
         </div>
