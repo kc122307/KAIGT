@@ -6,8 +6,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 
-// Updated: Use DEEPSEEK_API_KEY as the environment variable name
-const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY');
+// Updated: Use DEEPSEEK_API_KEY (which is actually OpenRouter API key)
+const openrouterApiKey = Deno.env.get('DEEPSEEK_API_KEY'); // Using same env var name for compatibility
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -42,7 +42,7 @@ serve(async (req) => {
     console.log('🔧 Environment check:');
     console.log('- SUPABASE_URL:', supabaseUrl || 'NOT SET');
     console.log('- SUPABASE_ANON_KEY present:', !!supabaseAnonKey);
-    console.log('- DEEPSEEK_API_KEY present:', !!deepseekApiKey);
+    console.log('- OPENROUTER_API_KEY present:', !!openrouterApiKey);
     
     if (!supabaseUrl || !supabaseAnonKey) {
       console.log('❌ Missing Supabase environment variables');
@@ -113,12 +113,12 @@ serve(async (req) => {
       );
     }
 
-    // Check for DeepSeek API key (free tier available)
-    console.log('🔑 Checking DeepSeek API key...');
-    if (!deepseekApiKey) {
+    // Check for OpenRouter API key (accessing DeepSeek R1 via OpenRouter)
+    console.log('🔑 Checking OpenRouter API key...');
+    if (!openrouterApiKey) {
       return new Response(
         JSON.stringify({ 
-          response: "I'm your AI productivity coach! However, I need a DeepSeek API key to provide personalized responses. Good news: DeepSeek offers a generous FREE tier! Get your free API key at https://platform.deepseek.com and configure it in the edge function settings.",
+          response: "I'm your AI productivity coach! However, I need an OpenRouter API key to access DeepSeek R1. Get your free API key at https://openrouter.ai and configure it in the edge function settings as DEEPSEEK_API_KEY.",
           suggestions: {}
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -149,15 +149,16 @@ serve(async (req) => {
       { role: 'user', content: message }
     ];
 
-    // Make DeepSeek API call
-    console.log('🤖 Preparing DeepSeek API request...');
+    // Make OpenRouter API call to DeepSeek R1
+    console.log('🤖 Preparing OpenRouter API request for DeepSeek R1...');
     console.log('📊 Request details:', {
-      model: 'deepseek-r1',
+      model: 'deepseek/deepseek-r1-0528:free',
       messageCount: messages.length,
       maxTokens: 600,
       temperature: 0.7,
-      hasApiKey: !!deepseekApiKey,
-      apiKeyPrefix: deepseekApiKey ? deepseekApiKey.substring(0, 10) + '...' : 'None'
+      hasApiKey: !!openrouterApiKey,
+      apiKeyPrefix: openrouterApiKey ? openrouterApiKey.substring(0, 10) + '...' : 'None',
+      endpoint: 'https://openrouter.ai/api/v1/chat/completions'
     });
     
     console.log('📝 Messages structure:', messages.map((msg, i) => ({
@@ -169,15 +170,17 @@ serve(async (req) => {
     
     let response;
     try {
-      console.log('🚀 Making DeepSeek API call...');
-      response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      console.log('🚀 Making OpenRouter API call to DeepSeek R1...');
+      response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${deepseekApiKey}`,
+          'Authorization': `Bearer ${openrouterApiKey}`,
           'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://goal-glimpse-achieve.app', // Optional for rankings
+          'X-Title': 'Goal Glimpse AI Coach' // Optional for rankings
         },
         body: JSON.stringify({
-          model: 'deepseek-r1',
+          model: 'deepseek/deepseek-r1-0528:free',
           messages,
           max_tokens: 600,
           temperature: 0.7,
@@ -185,15 +188,15 @@ serve(async (req) => {
         }),
       });
       
-      console.log('📊 DeepSeek API response status:', response.status, response.statusText);
+      console.log('📊 OpenRouter API response status:', response.status, response.statusText);
       
     } catch (fetchError) {
-      console.log('❌ DeepSeek API fetch failed:', fetchError);
+      console.log('❌ OpenRouter API fetch failed:', fetchError);
       return new Response(
         JSON.stringify({ 
-          response: `Network error: ${fetchError.message}. Please check your internet connection and try again.`,
+          response: `Network error connecting to OpenRouter: ${fetchError.message}. Please check your internet connection and try again.`,
           suggestions: {},
-          debug: { error: 'fetch_failed', details: fetchError.message }
+          debug: { error: 'openrouter_fetch_failed', details: fetchError.message }
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -203,32 +206,33 @@ serve(async (req) => {
     
     // Enhanced error logging for debugging
     if (!response.ok) {
-      console.error('DeepSeek API Error:', {
+      console.error('OpenRouter API Error:', {
         status: response.status,
         statusText: response.statusText,
         data: data,
-        model: 'deepseek-r1',
-        apiKeyExists: !!deepseekApiKey,
-        apiKeyPrefix: deepseekApiKey ? deepseekApiKey.substring(0, 10) + '...' : 'Not set'
+        model: 'deepseek/deepseek-r1-0528:free',
+        apiKeyExists: !!openrouterApiKey,
+        apiKeyPrefix: openrouterApiKey ? openrouterApiKey.substring(0, 10) + '...' : 'Not set'
       });
       
       return new Response(
         JSON.stringify({ 
-          response: `DeepSeek API Error (${response.status}): ${data.error?.message || response.statusText}. Please check your API configuration.`,
+          response: `OpenRouter API Error (${response.status}): ${data.error?.message || response.statusText}. Please check your OpenRouter API key configuration.`,
           suggestions: {},
           debug: {
             status: response.status,
             error: data.error?.message || 'Unknown error',
-            model: 'deepseek-r1',
-            hasApiKey: !!deepseekApiKey
+            model: 'deepseek/deepseek-r1-0528:free',
+            hasApiKey: !!openrouterApiKey,
+            provider: 'openrouter'
           }
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
     
-    console.log('DeepSeek API Success:', {
-      model: 'deepseek-r1',
+    console.log('OpenRouter API Success:', {
+      model: 'deepseek/deepseek-r1-0528:free',
       responseLength: data.choices?.[0]?.message?.content?.length || 0,
       usage: data.usage
     });
@@ -253,17 +257,17 @@ Return JSON in this exact format (omit sections if not relevant):
 }`;
 
       try {
-        // Updated: Change the fetch URL to DeepSeek's endpoint
-        const suggestionResponse = await fetch('https://api.deepseek.com/v1/chat/completions', {
+        // Use OpenRouter for suggestions API call
+        const suggestionResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: {
-            // Updated: Use the new deepseekApiKey for authorization
-            'Authorization': `Bearer ${deepseekApiKey}`,
+            'Authorization': `Bearer ${openrouterApiKey}`,
             'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://goal-glimpse-achieve.app',
+            'X-Title': 'Goal Glimpse AI Coach'
           },
           body: JSON.stringify({
-            // Using DeepSeek R1 0528 for suggestions  
-            model: 'deepseek-r1',
+            model: 'deepseek/deepseek-r1-0528:free',
             messages: [{ role: 'user', content: suggestionPrompt }],
             max_tokens: 300,
             temperature: 0.5,
@@ -274,7 +278,7 @@ Return JSON in this exact format (omit sections if not relevant):
         const suggestionData = await suggestionResponse.json();
         
         if (!suggestionResponse.ok) {
-          console.error('DeepSeek Suggestions API Error:', {
+          console.error('OpenRouter Suggestions API Error:', {
             status: suggestionResponse.status,
             data: suggestionData
           });
