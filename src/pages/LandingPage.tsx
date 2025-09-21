@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Logo } from "@/components/ui/Logo";
 import { Target, TrendingUp, Users, CheckCircle, Star, ArrowRight, Sparkles, Brain, Zap, MessageSquare, FileText, Mic, History, Bot, BarChart3, Trophy, Clock, Shield, Lightbulb, Rocket } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -114,13 +115,14 @@ const LandingPage = () => {
       <header className="header-gradient border-b border-white/20 backdrop-blur sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="relative">
-              <Target className="h-8 w-8 text-white drop-shadow-lg" />
-              <Sparkles className="h-4 w-4 text-yellow-300 absolute -top-1 -right-1 animate-pulse" />
-            </div>
+            <Logo 
+              size="lg" 
+              showText={false} 
+              className="drop-shadow-lg" 
+            />
             <div>
-              <h1 className="text-2xl font-bold text-white drop-shadow-md">Goal Glimpse</h1>
-              <p className="text-xs text-white/80">Achieve Together</p>
+              <h1 className="text-2xl font-bold text-white drop-shadow-md">KAIGT</h1>
+              <p className="text-xs text-white/80">Achieve Together with AI</p>
             </div>
           </div>
           <div className="flex items-center space-x-4">
@@ -146,11 +148,11 @@ const LandingPage = () => {
             
             <h2 className="text-6xl md:text-7xl font-bold mb-8 leading-tight">
               <span className="bg-gradient-to-r from-blue-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">
-                Goal Glimpse
+                KAIGT
               </span>
               <br />
               <span className="text-slate-800 dark:text-slate-200 text-4xl md:text-5xl">
-                Achieve Together with AI
+                Goal Glimpse - Achieve Together with AI
               </span>
             </h2>
             

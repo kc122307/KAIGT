@@ -3,7 +3,6 @@ import { Link, useLocation } from "react-router-dom";
 import { useGoalStore } from "../../store/goalStore";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Logo } from "@/components/ui/Logo";
 import { 
   Home, 
   CheckSquare, 
@@ -51,17 +50,6 @@ export const Sidebar = ({ open }: SidebarProps) => {
   
   return (
     <div className="flex flex-col h-full sidebar-gradient border-r border-white/20 p-4 backdrop-blur-sm">
-      {/* Logo section */}
-      <div className="mb-6">
-        <Link to="/" className="block">
-          <Logo 
-            size="xl" 
-            showText={true} 
-            className="justify-center" 
-          />
-        </Link>
-      </div>
-      
       {/* Profile section */}
       {currentUser && (
         <div className="glass-card p-4 mb-6 rounded-xl">

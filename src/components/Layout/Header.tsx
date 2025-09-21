@@ -43,13 +43,16 @@ export const Header = ({ toggleSidebar }: HeaderProps) => {
             <Menu className="h-5 w-5" />
           </Button>
           
-          <Link to="/" className="hover:scale-105 transition-transform duration-200">
+          <Link to="/" className="flex items-center gap-2 hover:scale-105 transition-transform duration-200">
             <Logo 
-              size="lg" 
-              showText={true} 
+              size="md" 
+              showText={false} 
               className="drop-shadow-lg" 
-              textClassName="text-white drop-shadow-md" 
             />
+            <div>
+              <span className="font-bold text-xl text-white drop-shadow-md">Goal Glimpse</span>
+              <p className="text-[10px] text-white/80 leading-none">Achieve Together</p>
+            </div>
           </Link>
         </div>
         
