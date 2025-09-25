@@ -28,8 +28,7 @@ export interface OpenRouterResponse {
 // Get OpenRouter API key from environment variables - try multiple possible names
 const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || 
                           import.meta.env.DEEPSEEK_API_KEY ||
-                          import.meta.env.VITE_DEEPSEEK_API_KEY ||
-                          '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'; // fallback
+                          import.meta.env.VITE_DEEPSEEK_API_KEY ; // fallback
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
