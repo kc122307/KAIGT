@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Send, Volume2, Copy, ThumbsUp, ThumbsDown, Target, Bot, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGoalStore } from "@/store/goalStore";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import { callOpenRouterDirectly } from "@/services/openrouterService";
 
 interface AICoachProps {
@@ -93,7 +93,8 @@ export const AICoach = ({ conversation, selectedPersonality, onGoalSuggestion, o
           status: g.status,
           progress: g.progress
         })),
-        recentConversation: conversationHistory.slice(-5)
+        recentConversation: conversationHistory.slice(-5),
+        personality: selectedPersonality?.prompt || null
       };
       
       console.log('📋 AICoach: User context prepared:', {
@@ -109,18 +110,18 @@ export const AICoach = ({ conversation, selectedPersonality, onGoalSuggestion, o
       };
       
       console.log('🚀 AICoach: Making API request to Edge Function...', {
-        url: 'https://gfqgjnytfgnpfiquqixt.supabase.co/functions/v1/ai-coach',
+        url: `${supabaseUrl}/functions/v1/ai-coach`,
         method: 'POST',
         hasAuth: !!session.access_token,
         bodyKeys: Object.keys(requestBody)
       });
 
-      const response = await fetch('https://gfqgjnytfgnpfiquqixt.supabase.co/functions/v1/ai-coach', {
+      const response = await fetch(`${supabaseUrl}/functions/v1/ai-coach`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcWdqbnl0ZmducGZpcXVxaXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYyMDc0ODgsImV4cCI6MjA2MTc4MzQ4OH0.QHEWlB4k_uka9AZoOHXOCW_tlRahaJcMNY5BAS9yjmI',
+          'apikey': supabaseAnonKey,
         },
         body: JSON.stringify(requestBody),
       });

@@ -359,6 +359,58 @@ export const deleteGoal = async (goalId: string): Promise<void> => {
   });
 };
 
+// Check in for a goal
+export const checkInGoal = async (goalId: string, updates: {
+  completed_days: number;
+  streak: number;
+  last_checked_in: string;
+  progress: number;
+  status: GoalStatus;
+}): Promise<Goal> => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    throw new Error("User not authenticated");
+  }
+
+  const { data, error } = await supabase
+    .from('goals')
+    .update({
+      completed_days: updates.completed_days,
+      streak: updates.streak,
+      last_checked_in: updates.last_checked_in,
+      progress: updates.progress,
+      status: updates.status,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', goalId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error checking in goal:', error);
+    throw error;
+  }
+
+  const updatedGoal = {
+    ...data,
+    deadline: new Date(data.deadline),
+    created_at: new Date(data.created_at),
+    updated_at: new Date(data.updated_at),
+    category: data.category as GoalCategory,
+    status: data.status as GoalStatus
+  };
+
+  // Add activity record
+  await addActivity({
+    user_id: session.user.id,
+    goal_id: goalId,
+    action_type: 'updated',
+    details: `Checked in for goal "${updatedGoal.title}" (Streak: 🔥 ${updates.streak})`
+  });
+
+  return updatedGoal;
+};
+
 // Get goals by filter
 export const getFilteredGoals = async (
   userId: string,

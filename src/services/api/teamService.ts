@@ -39,6 +39,9 @@ export interface TeamGoal {
   updated_at: string;
   created_by_user?: User;
   contributions?: TeamGoalContribution[];
+  completed_days?: number;
+  streak?: number;
+  last_checked_in?: string | null;
 }
 
 export interface TeamGoalContribution {
@@ -246,15 +249,44 @@ export const sendTeamInvitation = async (email: string, teamId: string): Promise
     throw new Error('Team is at maximum capacity (4 members)');
   }
 
-  // Check if user exists
-  const { data: userData, error: userError } = await supabase
-    .from('profiles')
-    .select('id, name')
-    .eq('name', email.trim())
-    .limit(1);
-
-  if (userError) {
-    console.error('Error finding user:', userError);
+  // Check if user exists (by email lookup RPC or by username search)
+  let userData: { id: string; name: string }[] | null = null;
+  
+  if (email.trim().includes('@')) {
+    // If it looks like an email, find their UUID using our RPC function
+    const { data: userId, error: rpcError } = await supabase.rpc('get_user_id_by_email', { 
+      email_to_search: email.trim() 
+    });
+    
+    if (rpcError) {
+      console.error('Error invoking get_user_id_by_email RPC:', rpcError);
+    }
+    
+    if (userId) {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, name')
+        .eq('id', userId)
+        .single();
+        
+      if (profileError) {
+        console.error('Error fetching profile for resolved email:', profileError);
+      } else if (profile) {
+        userData = [profile];
+      }
+    }
+  } else {
+    // Lookup by username/name
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, name')
+      .eq('name', email.trim())
+      .limit(1);
+      
+    if (profileError) {
+      console.error('Error finding user by name:', profileError);
+    }
+    userData = profile;
   }
 
   let invitationData: any;
@@ -324,13 +356,52 @@ export const sendTeamInvitation = async (email: string, teamId: string): Promise
     };
   }
 
-  const { error: insertError } = await supabase
+  // Perform insert and select the generated invitation_token
+  const { data: insertedData, error: insertError } = await supabase
     .from('team_invitations')
-    .insert(invitationData);
+    .insert(invitationData)
+    .select('invitation_token')
+    .single();
 
   if (insertError) {
     console.error('Error sending invitation:', insertError);
     throw insertError;
+  }
+
+  // If unregistered user is invited, trigger the email notification function
+  if (invitationType === 'unregistered' && insertedData?.invitation_token) {
+    try {
+      // Get inviter's profile name
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('id', user.id)
+        .single();
+      
+      const from_user_name = profileData?.name || 'A teammate';
+
+      console.log('Invoking send-invitation-email edge function...', {
+        to_email: email.trim(),
+        from_user_name,
+        invitation_token: insertedData.invitation_token
+      });
+
+      const { error: invokeError } = await supabase.functions.invoke('send-invitation-email', {
+        body: {
+          to_email: email.trim(),
+          from_user_name,
+          invitation_token: insertedData.invitation_token
+        }
+      });
+
+      if (invokeError) {
+        console.error('Failed to trigger invitation email edge function:', invokeError);
+      } else {
+        console.log('Invitation email Edge function triggered successfully.');
+      }
+    } catch (e) {
+      console.error('Error invoking invitation email edge function:', e);
+    }
   }
 
   return true;
@@ -585,6 +656,18 @@ export const updateTeamGoal = async (goalId: string, updates: {
   return goal;
 };
 
+export const deleteTeamGoal = async (goalId: string): Promise<void> => {
+  const { error } = await supabase
+    .from('team_goals')
+    .delete()
+    .eq('id', goalId);
+
+  if (error) {
+    console.error('Error deleting team goal:', error);
+    throw error;
+  }
+};
+
 export const updateTeamGoalContribution = async (goalId: string, contributionPoints: number, notes?: string): Promise<boolean> => {
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -666,4 +749,39 @@ export const leaveTeam = async (teamId: string): Promise<boolean> => {
   }
 
   return true;
+};
+
+export const checkInTeamGoal = async (goalId: string, updates: {
+  completed_days: number;
+  streak: number;
+  last_checked_in: string;
+  progress: number;
+  status: 'In Progress' | 'Completed' | 'Cancelled';
+}): Promise<TeamGoal> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  const { data: goal, error } = await supabase
+    .from('team_goals')
+    .update({
+      completed_days: updates.completed_days,
+      streak: updates.streak,
+      last_checked_in: updates.last_checked_in,
+      progress: updates.progress,
+      status: updates.status,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', goalId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error checking in team goal:', error);
+    throw error;
+  }
+
+  return goal;
 };

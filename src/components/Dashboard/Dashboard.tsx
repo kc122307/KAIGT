@@ -9,7 +9,6 @@ import { Notifications } from '../Notifications/Notifications';
 import { Stats } from './Stats';
 import { PlusIcon } from 'lucide-react';
 import { AddGoalModal } from './AddGoalModal';
-import { getFilteredGoals } from '../../services/api/goalService';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { useGSAP } from '../../hooks/useGSAP';
@@ -98,44 +97,52 @@ export const Dashboard = () => {
         }
       )
       .subscribe();
+
+    const teamGoalsChannel = supabase
+      .channel('public:team_goals:dashboard')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'team_goals'
+        },
+        (payload) => {
+          console.log('Team goal change received on dashboard:', payload);
+          fetchUserData();
+        }
+      )
+      .subscribe();
     
     // Clean up subscriptions when component unmounts
     return () => {
       supabase.removeChannel(goalsChannel);
       supabase.removeChannel(activitiesChannel);
       supabase.removeChannel(notificationsChannel);
+      supabase.removeChannel(teamGoalsChannel);
     };
   }, [currentUser, fetchUserData]);
   
-  // Fetch filtered goals when filters change
+  // Filter goals when goals list or filters change
   useEffect(() => {
-    const fetchFilteredGoals = async () => {
-      if (!currentUser) return;
-      
-      setIsLoading(true);
-      try {
-        const filtered = await getFilteredGoals(
-          currentUser.id,
-          filterCategory,
-          filterStatus
-        );
-        setFilteredGoals(filtered);
-      } catch (error) {
-        console.error('Error fetching filtered goals:', error);
-        // Fallback to client-side filtering if API fails
-        const filtered = goals.filter(goal => {
-          if (goal.user_id !== currentUser?.id) return false;
-          if (filterCategory !== 'All' && goal.category !== filterCategory) return false;
-          if (filterStatus !== 'All' && goal.status !== filterStatus) return false;
-          return true;
-        });
-        setFilteredGoals(filtered);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    if (!currentUser) return;
     
-    fetchFilteredGoals();
+    setIsLoading(true);
+    const filtered = goals.filter(goal => {
+      // Category filter
+      if (filterCategory !== 'All' && goal.category !== filterCategory) return false;
+      
+      // Status filter
+      if (filterStatus !== 'All' && goal.status !== filterStatus) return false;
+      
+      // If it is a team goal, show it
+      if (goal.is_team_goal) return true;
+      
+      // If it is personal goal, show only if it belongs to current user
+      return goal.user_id === currentUser.id;
+    });
+    setFilteredGoals(filtered);
+    setIsLoading(false);
   }, [goals, currentUser, filterCategory, filterStatus]);
   
   return (

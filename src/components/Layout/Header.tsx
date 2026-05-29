@@ -39,7 +39,7 @@ export const Header = ({ toggleSidebar }: HeaderProps) => {
     <header className="header-gradient border-b border-white/20 sticky top-0 z-30 backdrop-blur-lg">
       <div className="container mx-auto px-4 flex h-16 items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={toggleSidebar} className="lg:hidden">
+          <Button variant="ghost" size="icon" onClick={toggleSidebar} className="lg:hidden text-white hover:text-white hover:bg-white/20 transition-all duration-200">
             <Menu className="h-5 w-5" />
           </Button>
           
@@ -74,19 +74,19 @@ export const Header = ({ toggleSidebar }: HeaderProps) => {
             variant="ghost" 
             size="icon"
             onClick={() => setShowSearch(!showSearch)}
-            className="md:flex hidden text-white hover:bg-white/20 transition-all duration-200"
+            className="md:flex hidden text-white hover:text-white hover:bg-white/20 transition-all duration-200"
           >
             <Search className="h-5 w-5" />
           </Button>
           
           <Link to="/goals">
-            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 transition-all duration-200">
+            <Button variant="ghost" size="icon" className="text-white hover:text-white hover:bg-white/20 transition-all duration-200">
               <Plus className="h-5 w-5" />
             </Button>
           </Link>
           
           <Link to="/notifications">
-            <Button variant="ghost" size="icon" className="relative text-white hover:bg-white/20 transition-all duration-200">
+            <Button variant="ghost" size="icon" className="relative text-white hover:text-white hover:bg-white/20 transition-all duration-200">
               <Bell className="h-5 w-5" />
               {unreadNotifications > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] pulse-success">
@@ -96,7 +96,7 @@ export const Header = ({ toggleSidebar }: HeaderProps) => {
             </Button>
           </Link>
           
-          <Button variant="ghost" size="icon" onClick={toggleDarkMode} className="text-white hover:bg-white/20 transition-all duration-200">
+          <Button variant="ghost" size="icon" onClick={toggleDarkMode} className="text-white hover:text-white hover:bg-white/20 transition-all duration-200">
             {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
           

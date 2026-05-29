@@ -99,16 +99,18 @@ const ActivityPage = () => {
         return activities.filter(activity => 
           new Date(activity.timestamp).toDateString() === now.toDateString()
         );
-      case "week":
+      case "week": {
         const oneWeekAgo = subDays(now, 7);
         return activities.filter(activity => 
           new Date(activity.timestamp) >= oneWeekAgo
         );
-      case "month":
+      }
+      case "month": {
         const oneMonthAgo = subDays(now, 30);
         return activities.filter(activity => 
           new Date(activity.timestamp) >= oneMonthAgo
         );
+      }
       default:
         return activities;
     }

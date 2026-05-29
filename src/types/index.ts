@@ -15,6 +15,12 @@ export type Goal = {
   updated_at: Date;
   user_id: string;
   is_public: boolean;
+  is_team_goal?: boolean;
+  team_name?: string;
+  team_id?: string;
+  completed_days?: number;
+  streak?: number;
+  last_checked_in?: string | null;
 };
 
 export type User = {

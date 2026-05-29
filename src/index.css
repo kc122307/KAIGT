@@ -6,25 +6,25 @@
   :root {
     /* Achievement Gradient Theme - Blue to Teal */
     --background: 200 20% 98%;        /* Very light blue-gray */
-    --foreground: 210 100% 20%;       /* Deep blue */
+    --foreground: 0 0% 0%;            /* Pure black */
 
     --card: 200 50% 98%;              /* Soft blue-white */
-    --card-foreground: 210 100% 15%;  /* Darker blue */
+    --card-foreground: 0 0% 0%;       /* Pure black */
 
     --popover: 200 50% 99%;
-    --popover-foreground: 210 100% 15%;
+    --popover-foreground: 0 0% 0%;    /* Pure black */
 
     --primary: 210 100% 50%;          /* Vibrant blue */
     --primary-foreground: 0 0% 100%;  /* Pure white */
 
     --secondary: 180 30% 95%;         /* Light blue-green */
-    --secondary-foreground: 210 100% 25%;
+    --secondary-foreground: 0 0% 0%;  /* Pure black */
 
     --muted: 200 30% 94%;             /* Muted blue-gray */
-    --muted-foreground: 210 50% 40%;
+    --muted-foreground: 0 0% 15%;     /* Dark gray */
 
     --accent: 160 60% 50%;            /* Teal accent */
-    --accent-foreground: 0 0% 100%;
+    --accent-foreground: 0 0% 0%;     /* Pure black */
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
@@ -37,11 +37,11 @@
 
     /* Sidebar colors */
     --sidebar-background: 210 40% 97%;        /* Light blue sidebar */
-    --sidebar-foreground: 210 100% 25%;       /* Dark blue text */
+    --sidebar-foreground: 0 0% 0%;            /* Pure black */
     --sidebar-primary: 210 100% 50%;          /* Blue primary */
     --sidebar-primary-foreground: 0 0% 100%;  /* White text */
     --sidebar-accent: 180 30% 92%;            /* Light teal accent */
-    --sidebar-accent-foreground: 210 100% 30%;
+    --sidebar-accent-foreground: 0 0% 0%;     /* Pure black */
     --sidebar-border: 200 30% 85%;            /* Blue border */
     --sidebar-ring: 160 60% 50%;              /* Teal ring */
   }
@@ -49,25 +49,25 @@
   .dark {
     /* Dark mode with blue-teal theme */
     --background: 210 50% 8%;             /* Dark blue background */
-    --foreground: 180 30% 90%;            /* Light blue-white text */
+    --foreground: 0 0% 100%;              /* Pure white text */
 
     --card: 210 40% 10%;                  /* Dark blue cards */
-    --card-foreground: 180 30% 92%;
+    --card-foreground: 0 0% 100%;         /* Pure white */
 
     --popover: 210 40% 10%;
-    --popover-foreground: 180 30% 92%;
+    --popover-foreground: 0 0% 100%;      /* Pure white */
 
     --primary: 160 60% 50%;               /* Teal primary in dark */
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 30% 15%;             /* Dark blue-gray */
-    --secondary-foreground: 180 30% 90%;
+    --secondary-foreground: 0 0% 100%;    /* Pure white */
 
     --muted: 210 30% 15%;
-    --muted-foreground: 200 20% 65%;
+    --muted-foreground: 0 0% 85%;         /* Light gray */
 
     --accent: 180 50% 60%;                /* Bright teal accent */
-    --accent-foreground: 210 50% 10%;
+    --accent-foreground: 0 0% 100%;       /* Pure white */
 
     --destructive: 0 62.8% 50%;
     --destructive-foreground: 0 0% 98%;
@@ -78,11 +78,11 @@
     
     /* Dark sidebar */
     --sidebar-background: 210 50% 6%;
-    --sidebar-foreground: 180 30% 85%;
+    --sidebar-foreground: 0 0% 100%;      /* Pure white */
     --sidebar-primary: 160 60% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 210 30% 12%;
-    --sidebar-accent-foreground: 180 30% 85%;
+    --sidebar-accent-foreground: 0 0% 100%;  /* Pure white */
     --sidebar-border: 210 30% 15%;
     --sidebar-ring: 160 60% 50%;
   }

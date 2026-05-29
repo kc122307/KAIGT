@@ -8,12 +8,12 @@ console.log('DEBUG: All environment variables:', import.meta.env);
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 
                     import.meta.env.SUPABASE_URL || 
                     import.meta.env.VITE_SUPABASE_PROJECT_URL ||
-                    'https://gfqgjnytfgnpfiquqixt.supabase.co'; // fallback
+                    ''; // fallback
                     
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 
                                 import.meta.env.SUPABASE_ANON_KEY ||
                                 import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-                                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmcWdqbnl0ZmducGZpcXVxaXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYyMDc0ODgsImV4cCI6MjA2MTc4MzQ4OH0.QHEWlB4k_uka9AZoOHXOCW_tlRahaJcMNY5BAS9yjmI'; // fallback
+                                ''; // fallback
 
 console.log('DEBUG: Resolved values:', {
   SUPABASE_URL,
@@ -36,5 +36,8 @@ if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
+
+export const supabaseUrl = SUPABASE_URL;
+export const supabaseAnonKey = SUPABASE_PUBLISHABLE_KEY;
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);

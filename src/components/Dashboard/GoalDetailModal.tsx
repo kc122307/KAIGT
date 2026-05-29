@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useGoalStore } from "../../store/goalStore";
+import { useGoalStore, calculateHybridProgress, getLocalDateString } from "../../store/goalStore";
 import { Progress } from "@/components/ui/progress";
-import { Calendar, Clock, Trash, Edit, Check, X, Users, Share2 } from "lucide-react";
+import { Calendar, Clock, Trash, Edit, Check, X, Users, Share2, Sparkles } from "lucide-react";
 import { format } from 'date-fns';
-import { Slider } from "@/components/ui/slider";
 import { EditGoalForm } from "./EditGoalForm";
 import { GoalStatus } from "../../types";
+import { cn } from "@/lib/utils";
 
 interface GoalDetailModalProps {
   goalId: string;
@@ -15,54 +15,28 @@ interface GoalDetailModalProps {
 }
 
 export const GoalDetailModal = ({ goalId, onClose }: GoalDetailModalProps) => {
-  const { goals, updateGoalProgress, updateGoalStatus, deleteGoal } = useGoalStore();
+  const { goals, updateGoalStatus, deleteGoal, checkInGoalAction } = useGoalStore();
   const goal = goals.find(g => g.id === goalId);
   const [isEditing, setIsEditing] = useState(false);
-  const [progress, setProgress] = useState(goal?.progress || 0);
   
   if (!goal) {
     onClose();
     return null;
   }
   
+  const todayStr = getLocalDateString(new Date());
+  const isCheckedInToday = goal.last_checked_in === todayStr;
+
+  const { timeProgress, checkInProgress, overallProgress, totalDuration, daysPassed } = calculateHybridProgress({
+    created_at: goal.created_at,
+    deadline: goal.deadline,
+    completed_days: goal.completed_days
+  });
+
   const daysRemaining = Math.ceil((goal.deadline.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
   const isOverdue = daysRemaining < 0 && goal.status !== 'Completed';
   
-  const handleProgressChange = (value: number[]) => {
-    setProgress(value[0]);
-  };
-  
-  const handleProgressUpdate = () => {
-    updateGoalProgress(goal.id, progress);
-  };
-  
   const handleStatusChange = (newStatus: GoalStatus) => {
-    const currentStatus = goal.status;
-    
-    // Apply progress rules based on status transitions
-    let newProgress = goal.progress;
-    
-    if (currentStatus === 'Completed' && newStatus === 'Pending') {
-      // Completed to Pending: set progress to 0%
-      newProgress = 0;
-    } else if (currentStatus === 'In-Progress' && newStatus === 'Pending') {
-      // In-Progress to Pending: set progress to 0%
-      newProgress = 0;
-    } else if (newStatus === 'Completed' && (currentStatus === 'Pending' || currentStatus === 'In-Progress')) {
-      // Pending/In-Progress to Completed: set progress to 100%
-      newProgress = 100;
-    } else if (currentStatus === 'Completed' && newStatus === 'In-Progress') {
-      // Completed to In-Progress: keep current progress unchanged
-      newProgress = goal.progress;
-    } else if (currentStatus === 'Pending' && newStatus === 'In-Progress') {
-      // Pending to In-Progress: keep current progress unchanged (last position)
-      newProgress = goal.progress;
-    }
-    
-    // Update the local progress state to reflect the change
-    setProgress(newProgress);
-    
-    // Update the goal status (the service will handle progress update based on the rules)
     updateGoalStatus(goal.id, newStatus);
   };
   
@@ -78,6 +52,7 @@ export const GoalDetailModal = ({ goalId, onClose }: GoalDetailModalProps) => {
           <>
             <DialogHeader>
               <DialogTitle>Edit Goal</DialogTitle>
+              <DialogDescription>Modify your goal details and deadline.</DialogDescription>
             </DialogHeader>
             <EditGoalForm goal={goal} onClose={() => setIsEditing(false)} />
           </>
@@ -98,7 +73,7 @@ export const GoalDetailModal = ({ goalId, onClose }: GoalDetailModalProps) => {
                       {goal.status}
                     </span>
                   </div>
-                  <DialogTitle>{goal.title}</DialogTitle>
+                  <DialogTitle className="text-xl font-bold">{goal.title}</DialogTitle>
                 </div>
                 
                 <div className="flex gap-2">
@@ -110,7 +85,9 @@ export const GoalDetailModal = ({ goalId, onClose }: GoalDetailModalProps) => {
                   </Button>
                 </div>
               </div>
-              <DialogDescription>{goal.description}</DialogDescription>
+              <DialogDescription className="mt-2 text-sm text-muted-foreground">
+                {goal.description || "No description provided for this goal."}
+              </DialogDescription>
             </DialogHeader>
             
             <div className="space-y-6 my-2">
@@ -121,7 +98,7 @@ export const GoalDetailModal = ({ goalId, onClose }: GoalDetailModalProps) => {
                 </div>
                 
                 {isOverdue ? (
-                  <span className="text-destructive font-medium">Overdue</span>
+                  <span className="text-destructive font-medium animate-pulse">Overdue</span>
                 ) : (
                   <div className="flex items-center gap-1.5">
                     <Clock className="h-4 w-4 text-muted-foreground" />
@@ -130,31 +107,89 @@ export const GoalDetailModal = ({ goalId, onClose }: GoalDetailModalProps) => {
                 )}
               </div>
               
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Progress</span>
-                  <span className="font-medium">{progress}%</span>
+              {/* Daily Habit Check-In Panel */}
+              <div className="bg-muted/40 p-4 rounded-xl border border-border/50 space-y-3">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h4 className="text-sm font-semibold flex items-center gap-1">
+                      Daily Check-In
+                    </h4>
+                    <p className="text-xs text-muted-foreground">
+                      Mark your progress daily to build your habit streak.
+                    </p>
+                  </div>
+                  {goal.streak && goal.streak > 0 ? (
+                    <div className="text-orange-600 font-bold text-sm bg-orange-100 dark:bg-orange-950/40 px-2.5 py-1 rounded-full flex items-center gap-1 border border-orange-200/20">
+                      🔥 {goal.streak} Streak
+                    </div>
+                  ) : null}
                 </div>
-                <Progress value={progress} className="h-2" />
+
+                <Button
+                  onClick={() => checkInGoalAction(goal.id)}
+                  disabled={isCheckedInToday || goal.status === 'Completed'}
+                  className={cn(
+                    "w-full py-6 text-sm font-semibold flex items-center justify-center gap-2 rounded-xl transition-all duration-300",
+                    isCheckedInToday
+                      ? "bg-green-600 hover:bg-green-700 text-white cursor-default opacity-95"
+                      : goal.status === 'Completed'
+                        ? "bg-muted text-muted-foreground cursor-not-allowed"
+                        : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg active:scale-95 cursor-pointer"
+                  )}
+                >
+                  {isCheckedInToday ? (
+                    <>
+                      <Check className="w-5 h-5 stroke-[3]" />
+                      <span>Checked In for Today!</span>
+                    </>
+                  ) : goal.status === 'Completed' ? (
+                    <span>Goal Completed! 🎉</span>
+                  ) : (
+                    <>
+                      <Sparkles className="w-5 h-5 animate-pulse text-amber-300" />
+                      <span>Check-In for Today (+1 Day)</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* Hybrid Progress Breakdown */}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="font-semibold text-base">Overall Hybrid Progress</span>
+                    <span className="font-bold text-base text-primary">{overallProgress}%</span>
+                  </div>
+                  <Progress value={overallProgress} className="h-3.5 transition-all duration-500">
+                    <div className="progress-gradient h-full rounded-full" style={{ width: `${overallProgress}%` }} />
+                  </Progress>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  {/* Time progress */}
+                  <div className="bg-muted/30 p-3 rounded-lg border border-border/30 space-y-1.5">
+                    <span className="text-xs text-muted-foreground font-medium block">Time Elapsed (50%)</span>
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-lg font-bold">{Math.round(timeProgress)}%</span>
+                      <span className="text-xs text-muted-foreground">{daysPassed} / {totalDuration} Days</span>
+                    </div>
+                    <Progress value={timeProgress} className="h-1.5" />
+                  </div>
+
+                  {/* Check-in progress */}
+                  <div className="bg-muted/30 p-3 rounded-lg border border-border/30 space-y-1.5">
+                    <span className="text-xs text-muted-foreground font-medium block">Check-ins (50%)</span>
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-lg font-bold">{Math.round(checkInProgress)}%</span>
+                      <span className="text-xs text-muted-foreground">{goal.completed_days || 0} / {totalDuration} Days</span>
+                    </div>
+                    <Progress value={checkInProgress} className="h-1.5" />
+                  </div>
+                </div>
               </div>
               
               <div className="space-y-2">
-                <label className="text-sm">Update progress:</label>
-                <div className="flex gap-4 items-center">
-                  <Slider 
-                    value={[progress]} 
-                    min={0} 
-                    max={100} 
-                    step={5}
-                    onValueChange={handleProgressChange}
-                    className="flex-1" 
-                  />
-                  <Button onClick={handleProgressUpdate} size="sm">Update</Button>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm">Change status:</label>
+                <label className="text-sm font-medium">Change status:</label>
                 <div className="flex gap-2">
                   <Button
                     variant={goal.status === 'Pending' ? 'default' : 'outline'}
@@ -184,7 +219,7 @@ export const GoalDetailModal = ({ goalId, onClose }: GoalDetailModalProps) => {
               </div>
             </div>
             
-            <DialogFooter className="flex justify-between sm:justify-between">
+            <DialogFooter className="flex justify-between sm:justify-between border-t pt-4">
               <Button variant="outline" onClick={onClose}>Close</Button>
               
               {goal.is_public ? (

@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RegisterFormFields } from './RegisterFormFields';
 import { SocialLogin } from './SocialLogin';
 
-export const LoginForm = () => {
+export const LoginForm = ({ defaultTab = "login" }: { defaultTab?: "login" | "register" }) => {
   const loginAuth = useAuth('login');
   const registerAuth = useAuth('register');
   const { isAuthenticated } = useGoalStore();
@@ -53,7 +53,7 @@ export const LoginForm = () => {
 
         <Card>
           <CardContent className="pt-4">
-            <Tabs defaultValue="login" className="w-full">
+            <Tabs defaultValue={defaultTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="register">Register</TabsTrigger>

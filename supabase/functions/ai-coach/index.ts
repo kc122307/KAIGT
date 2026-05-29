@@ -132,8 +132,71 @@ serve(async (req) => {
       );
     }
 
-    // Build context-aware prompt
-    let contextPrompt = 'You are a helpful AI productivity coach. Provide practical, actionable advice about goal setting, time management, productivity, and personal development.';
+    // Build context-aware prompt with personality and premium formatting instructions
+    let contextPrompt = `You are a modern AI Coach assistant.
+
+Your responses must feel clean, premium, minimal, and human.
+
+Formatting Rules:
+- NEVER use markdown formatting symbols (no \`**\` for bolding, no \`*\` or \`-\` for bullet lists, no \`###\` or \`##\` for headings, and no horizontal rules like \`***\`).
+- The UI renders your response as plain text, so raw markdown tags look like broken code.
+- Use simple capitalization or plain text on a single line (with newlines before and after) to divide sections.
+- Instead of bullet points, write separate actions as short paragraphs separated by clean line breaks.
+- Avoid robotic, generic heading cards (instead of "Week 1: Foundations", use a clean label like "Days 1–7" or "Week 1" on its own line with nice spacing).
+- Prefer numbered progression, day ranges, or weekly phases for roadmaps instead of bulleted lists.
+- Use short readable sections and spacing intentionally to create a card-like layout.
+- Keep paragraphs small and sentences concise, but highly actionable and detailed enough to be useful.
+
+Response Style:
+- Write naturally and confidently
+- Use concise sentences
+- Make the plan actionable immediately. When a user requests a timeline or roadmap, provide a structured plan with specific weekly or day-by-day actions.
+- Focus on clarity over quantity, but do not sacrifice necessary details or steps
+- Every section should feel useful
+- Avoid repeating the user's goal unnecessarily
+
+Preferred Structure:
+- Goal understanding
+- Clear roadmap (detailed progression by days or weeks)
+- Daily actions
+- Milestones
+- Final outcome
+
+UI/Text Presentation Rules:
+- Use clean section titles in plain text
+- Keep paragraphs small
+- Use emojis minimally and only when useful
+- Never create huge markdown walls
+- Avoid nested lists
+- Avoid excessive indentation
+- Keep the response mobile-friendly
+
+Tone:
+- Modern, Minimal, Premium, Human, Helpful, Direct.
+
+The response should feel like:
+- Notion AI
+- Apple-style writing
+- High-end coaching app
+- Calm and intelligent assistant
+
+Do not generate generic AI-style formatting. Refer to these examples:
+Bad: "### Days 1-7: Foundations" with "**Your Focus:** ..." and bullets
+Good:
+Days 1-7
+Foundations
+
+Focus on getting comfortable with movement. 
+Practice 15 minutes daily by copying simple movements from dance videos. Do not worry about perfection.
+
+Bad: "Daily practice: 20 minutes"
+Good: "Practice 20 minutes daily. Consistency matters more than long sessions."`;
+
+    if (userContext?.personality) {
+      contextPrompt += `\n\nActive personality focus: ${userContext.personality}`;
+    } else {
+      contextPrompt += `\n\nActive personality focus: You are a helpful AI productivity coach. Provide practical, actionable advice about goal setting, time management, productivity, and personal development.`;
+    }
     
     if (userContext?.goals && userContext.goals.length > 0) {
       contextPrompt += `\n\nUser's current goals:\n${userContext.goals.map(g => 
@@ -156,12 +219,12 @@ serve(async (req) => {
       { role: 'user', content: message }
     ];
 
-    // Make OpenRouter API call to DeepSeek R1
-    console.log('🤖 Preparing OpenRouter API request for DeepSeek R1...');
+    // Make OpenRouter API call to Llama 3.3 70B
+    console.log('🤖 Preparing OpenRouter API request for Llama 3.3 70B...');
     console.log('📊 Request details:', {
-      model: 'deepseek/deepseek-r1-0528:free',
+      model: 'meta-llama/llama-3.3-70b-instruct:free',
       messageCount: messages.length,
-      maxTokens: 600,
+      maxTokens: 1500,
       temperature: 0.7,
       hasApiKey: !!openrouterApiKey,
       apiKeyPrefix: openrouterApiKey ? openrouterApiKey.substring(0, 10) + '...' : 'None',
@@ -177,7 +240,7 @@ serve(async (req) => {
     
     let response;
     try {
-      console.log('🚀 Making OpenRouter API call to DeepSeek R1...');
+      console.log('🚀 Making OpenRouter API call to Llama 3.3 70B...');
       response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -187,9 +250,9 @@ serve(async (req) => {
           'X-Title': 'Goal Glimpse AI Coach' // Optional for rankings
         },
         body: JSON.stringify({
-          model: 'deepseek/deepseek-r1-0528:free',
+          model: 'meta-llama/llama-3.3-70b-instruct:free',
           messages,
-          max_tokens: 600,
+          max_tokens: 1500,
           temperature: 0.7,
           stream: false
         }),
@@ -218,7 +281,7 @@ serve(async (req) => {
         status: response.status,
         statusText: response.statusText,
         data: data,
-        model: 'deepseek/deepseek-r1-0528:free',
+        model: 'meta-llama/llama-3.3-70b-instruct:free',
         apiKeyExists: !!openrouterApiKey,
         apiKeyPrefix: openrouterApiKey ? openrouterApiKey.substring(0, 10) + '...' : 'Not set'
       });
@@ -230,7 +293,7 @@ serve(async (req) => {
           debug: {
             status: response.status,
             error: data.error?.message || 'Unknown error',
-            model: 'deepseek/deepseek-r1-0528:free',
+            model: 'meta-llama/llama-3.3-70b-instruct:free',
             hasApiKey: !!openrouterApiKey,
             provider: 'openrouter'
           }
@@ -240,7 +303,7 @@ serve(async (req) => {
     }
     
     console.log('OpenRouter API Success:', {
-      model: 'deepseek/deepseek-r1-0528:free',
+      model: 'meta-llama/llama-3.3-70b-instruct:free',
       responseLength: data.choices?.[0]?.message?.content?.length || 0,
       usage: data.usage
     });
@@ -290,7 +353,7 @@ Return JSON in this exact format (omit sections if not relevant):
             'X-Title': 'Goal Glimpse AI Coach'
           },
           body: JSON.stringify({
-            model: 'deepseek/deepseek-r1-0528:free',
+            model: 'meta-llama/llama-3.3-70b-instruct:free',
             messages: [{ role: 'user', content: suggestionPrompt }],
             max_tokens: 300,
             temperature: 0.5,

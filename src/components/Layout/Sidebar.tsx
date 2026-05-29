@@ -70,10 +70,10 @@ export const Sidebar = ({ open }: SidebarProps) => {
             <Button
               variant="ghost"
               className={cn(
-                "w-full justify-start transition-all duration-200 hover:scale-105 hover:bg-white/10",
+                "w-full justify-start transition-all duration-200 border border-transparent text-black hover:text-black dark:text-white dark:hover:text-white",
                 location.pathname === item.path 
-                  ? "bg-white/20 shadow-lg backdrop-blur-sm border border-white/30" 
-                  : "hover:bg-white/5"
+                  ? "bg-black/10 border-black/10 shadow-sm dark:bg-white/20 dark:border-white/30 dark:shadow-lg" 
+                  : "hover:bg-black/5 dark:hover:bg-white/10"
               )}
             >
               {item.icon}
@@ -96,8 +96,13 @@ export const Sidebar = ({ open }: SidebarProps) => {
       <div className="space-y-1">
         <Link to="/settings">
           <Button
-            variant={location.pathname === '/settings' ? "secondary" : "ghost"}
-            className="w-full justify-start"
+            variant="ghost"
+            className={cn(
+              "w-full justify-start transition-all duration-200 border border-transparent text-black hover:text-black dark:text-white dark:hover:text-white",
+              location.pathname === '/settings'
+                ? "bg-black/10 border-black/10 shadow-sm dark:bg-white/20 dark:border-white/30 dark:shadow-lg"
+                : "hover:bg-black/5 dark:hover:bg-white/10"
+            )}
           >
             <Settings className="h-5 w-5 mr-2" />
             Settings

@@ -26,7 +26,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { Goal, GoalCategory } from '../../types';
 import { useForm } from 'react-hook-form';
-import { useGoalStore } from '../../store/goalStore';
+import { useGoalStore, getDaysDifference } from '../../store/goalStore';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -39,12 +39,17 @@ export const EditGoalForm = ({ goal, onClose }: EditGoalFormProps) => {
   const { updateGoal } = useGoalStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  const created = goal.created_at ? new Date(goal.created_at) : new Date();
+  const initialDeadline = goal.deadline ? new Date(goal.deadline) : new Date();
+  const initialDurationDays = Math.max(1, getDaysDifference(created, initialDeadline));
+  
   const form = useForm({
     defaultValues: {
       title: goal.title,
       description: goal.description,
       category: goal.category,
-      deadline: goal.deadline,
+      deadline: initialDeadline,
+      durationDays: initialDurationDays,
       isPublic: goal.is_public
     }
   });
@@ -64,20 +69,7 @@ export const EditGoalForm = ({ goal, onClose }: EditGoalFormProps) => {
         progress: goal.progress
       };
       
-      // Update goal directly in Supabase first
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error("User not authenticated");
-      }
-      
-      const { error } = await supabase
-        .from('goals')
-        .update(goalUpdate)
-        .eq('id', goal.id);
-        
-      if (error) throw error;
-      
-      // Then update in store
+      // Update in store (handles both personal and team goals)
       await updateGoal(goal.id, goalUpdate);
       
       toast({
@@ -166,11 +158,44 @@ export const EditGoalForm = ({ goal, onClose }: EditGoalFormProps) => {
         
         <FormField
           control={form.control}
+          name="durationDays"
+          rules={{ 
+            required: "Duration is required",
+            min: { value: 1, message: "Duration must be at least 1 day" }
+          }}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Complete In (Days)</FormLabel>
+              <FormControl>
+                <Input 
+                  type="number" 
+                  min={1} 
+                  placeholder="Enter number of days" 
+                  {...field}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 0;
+                    field.onChange(val);
+                    if (val > 0) {
+                      const newDate = new Date(created);
+                      newDate.setHours(0, 0, 0, 0);
+                      newDate.setDate(newDate.getDate() + val);
+                      form.setValue('deadline', newDate);
+                    }
+                  }}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
           name="deadline"
           rules={{ required: "Deadline is required" }}
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>Deadline</FormLabel>
+              <FormLabel>Deadline Date</FormLabel>
               <Popover>
                 <PopoverTrigger asChild>
                   <FormControl>
@@ -194,7 +219,20 @@ export const EditGoalForm = ({ goal, onClose }: EditGoalFormProps) => {
                   <Calendar
                     mode="single"
                     selected={field.value}
-                    onSelect={field.onChange}
+                    onSelect={(date) => {
+                      field.onChange(date);
+                      if (date) {
+                        const createdDate = new Date(created);
+                        createdDate.setHours(0, 0, 0, 0);
+                        const target = new Date(date);
+                        target.setHours(0, 0, 0, 0);
+                        const diffDays = Math.max(1, getDaysDifference(createdDate, target));
+                        form.setValue('durationDays', diffDays);
+                      }
+                    }}
+                    disabled={(date) =>
+                      date < new Date(new Date(created).setHours(0, 0, 0, 0))
+                    }
                     initialFocus
                   />
                 </PopoverContent>
