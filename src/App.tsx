@@ -9,6 +9,7 @@ import { AppLayout } from "./components/Layout/AppLayout";
 import { LoginForm } from "./components/Auth/LoginForm";
 import { useEffect, useState } from "react";
 import { useGoalStore } from "./store/goalStore";
+import { toast } from "@/components/ui/use-toast";
 
 // Pages
 import LandingPage from "./pages/LandingPage";
@@ -23,6 +24,7 @@ import ProgressPage from "./pages/ProgressPage";
 import SettingsPage from "./pages/SettingsPage";
 import TeamPage from "./pages/TeamPage";
 import AIPage from "./pages/AIPage";
+import InvitationsPage from "./pages/InvitationsPage";
 
 // Set up QueryClient
 const queryClient = new QueryClient({
@@ -62,6 +64,7 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 const AppInitializer = ({ children }: { children: React.ReactNode }) => {
   const fetchUserData = useGoalStore(state => state.fetchUserData);
   const isAuthenticated = useGoalStore(state => state.isAuthenticated);
+  const currentUser = useGoalStore(state => state.currentUser);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
@@ -69,16 +72,58 @@ const AppInitializer = ({ children }: { children: React.ReactNode }) => {
   // Store last visited path in session storage
   useEffect(() => {
     // Only save paths that aren't login or non-existing routes for authenticated users
-    if (location.pathname !== '/login' && location.pathname !== '*' && location.pathname !== '/' && isAuthenticated) {
+    if (location.pathname !== '/login' && location.pathname !== '/register' && location.pathname !== '*' && location.pathname !== '/' && isAuthenticated) {
       sessionStorage.setItem('lastVisitedPath', location.pathname);
     }
   }, [location.pathname, isAuthenticated]);
 
+  // Handle invitation token processing on auth or load
   useEffect(() => {
-    // Initialize app data
+    if (isAuthenticated && currentUser) {
+      const params = new URLSearchParams(location.search);
+      const token = params.get('invitation_token');
+      if (token) {
+        const processToken = async () => {
+          try {
+            console.log('Processing invitation token:', token);
+            const { processInvitationToken } = await import('./services/api/invitationService');
+            const result = await processInvitationToken(token, currentUser.id);
+            if (result.success) {
+              toast({
+                title: "Invitation Linked!",
+                description: "You have been successfully linked to the team. Accept it from your notifications or team page.",
+              });
+              // Refresh user data (goals, teams, notifications)
+              fetchUserData();
+            } else {
+              toast({
+                title: "Invitation failed",
+                description: result.error || "Could not link invitation.",
+                variant: "destructive"
+              });
+            }
+          } catch (e) {
+            console.error('Failed to process invitation:', e);
+          } finally {
+            // Remove invitation_token from the URL query params so it doesn't process again
+            params.delete('invitation_token');
+            navigate(location.pathname + (params.toString() ? `?${params.toString()}` : ''), { replace: true });
+          }
+        };
+        processToken();
+      }
+    }
+  }, [isAuthenticated, currentUser, location.search, navigate, fetchUserData, location.pathname]);
+
+  useEffect(() => {
+    // Initialize app data with a timeout so the app doesn't hang
+    // if Supabase is unreachable
     const init = async () => {
       try {
-        await fetchUserData();
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Supabase connection timed out')), 10000)
+        );
+        await Promise.race([fetchUserData(), timeoutPromise]);
       } catch (error) {
         console.error("Error fetching user data:", error);
       } finally {
@@ -114,7 +159,12 @@ const App = () => (
               } />
               <Route path="/login" element={
                 <PublicRoute>
-                  <LoginForm />
+                  <LoginForm defaultTab="login" />
+                </PublicRoute>
+              } />
+              <Route path="/register" element={
+                <PublicRoute>
+                  <LoginForm defaultTab="register" />
                 </PublicRoute>
               } />
               
@@ -133,6 +183,7 @@ const App = () => (
                 <Route path="/leaderboard" element={<LeaderboardPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/team" element={<TeamPage />} />
+                <Route path="/invitations" element={<InvitationsPage />} />
                 <Route path="/ai" element={<AIPage />} />
               </Route>
               

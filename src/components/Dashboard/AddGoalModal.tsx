@@ -39,6 +39,7 @@ interface GoalFormValues {
   description: string;
   category: GoalCategory;
   deadline: Date;
+  durationDays: number;
   isPublic: boolean;
 }
 
@@ -51,6 +52,7 @@ export const AddGoalModal = ({ open, onOpenChange }: AddGoalModalProps) => {
       description: '',
       category: 'Personal',
       deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      durationDays: 30,
       isPublic: true
     }
   });
@@ -64,6 +66,15 @@ export const AddGoalModal = ({ open, onOpenChange }: AddGoalModalProps) => {
       progress: 0,
       deadline: values.deadline,
       is_public: values.isPublic,
+    });
+    // Reset form after submission
+    form.reset({
+      title: '',
+      description: '',
+      category: 'Personal',
+      deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      durationDays: 30,
+      isPublic: true
     });
     onOpenChange(false);
   };
@@ -143,11 +154,44 @@ export const AddGoalModal = ({ open, onOpenChange }: AddGoalModalProps) => {
             
             <FormField
               control={form.control}
+              name="durationDays"
+              rules={{ 
+                required: "Duration is required",
+                min: { value: 1, message: "Duration must be at least 1 day" }
+              }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Complete In (Days)</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      min={1} 
+                      placeholder="Enter number of days" 
+                      {...field}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || 0;
+                        field.onChange(val);
+                        if (val > 0) {
+                          const newDate = new Date();
+                          newDate.setHours(0, 0, 0, 0);
+                          newDate.setDate(newDate.getDate() + val);
+                          form.setValue('deadline', newDate);
+                        }
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
               name="deadline"
               rules={{ required: "Deadline is required" }}
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Deadline</FormLabel>
+                  <FormLabel>Deadline Date</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -171,7 +215,18 @@ export const AddGoalModal = ({ open, onOpenChange }: AddGoalModalProps) => {
                       <Calendar
                         mode="single"
                         selected={field.value}
-                        onSelect={field.onChange}
+                        onSelect={(date) => {
+                          field.onChange(date);
+                          if (date) {
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            const target = new Date(date);
+                            target.setHours(0, 0, 0, 0);
+                            const diffTime = target.getTime() - today.getTime();
+                            const diffDays = Math.max(1, Math.round(diffTime / (1000 * 60 * 60 * 24)));
+                            form.setValue('durationDays', diffDays);
+                          }
+                        }}
                         disabled={(date) =>
                           date < new Date(new Date().setHours(0, 0, 0, 0))
                         }

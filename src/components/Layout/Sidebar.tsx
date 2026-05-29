@@ -1,23 +1,21 @@
-
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useGoalStore } from "../../store/goalStore";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { 
   Home, 
   CheckSquare, 
-  ListTodo, 
-  LineChart, 
-  User, 
   Settings, 
   LogOut,
-  Bell,
-  Activity,
   Trophy,
   Users,
-  Brain
+  Brain,
+  Mail
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getUserTeamInvitations } from "../../services/api/teamService";
 
 interface SidebarProps {
   open: boolean;
@@ -26,6 +24,24 @@ interface SidebarProps {
 export const Sidebar = ({ open }: SidebarProps) => {
   const { logout, currentUser, goals } = useGoalStore();
   const location = useLocation();
+  const [invitationsCount, setInvitationsCount] = useState<number>(0);
+  
+  useEffect(() => {
+    if (!currentUser) return;
+    
+    const loadInvitationsCount = async () => {
+      try {
+        const data = await getUserTeamInvitations();
+        setInvitationsCount(data.length);
+      } catch (error) {
+        console.error('Error fetching sidebar invitations count:', error);
+      }
+    };
+    
+    loadInvitationsCount();
+    const interval = setInterval(loadInvitationsCount, 30000);
+    return () => clearInterval(interval);
+  }, [currentUser]);
   
   // Calculate completed goals from actual goals data
   const completedGoalsCount = currentUser 
@@ -35,10 +51,7 @@ export const Sidebar = ({ open }: SidebarProps) => {
   const navItems = [
     { title: 'Dashboard', icon: <Home className="h-5 w-5" />, path: '/' },
     { title: 'Goals', icon: <CheckSquare className="h-5 w-5" />, path: '/goals' },
-    { title: 'Tasks', icon: <ListTodo className="h-5 w-5" />, path: '/tasks' },
-    { title: 'Progress', icon: <LineChart className="h-5 w-5" />, path: '/progress' },
-    { title: 'Activity', icon: <Activity className="h-5 w-5" />, path: '/activity' },
-    { title: 'Notifications', icon: <Bell className="h-5 w-5" />, path: '/notifications' },
+    { title: 'Invitations', icon: <Mail className="h-5 w-5" />, path: '/invitations', badge: invitationsCount },
     { title: 'Leaderboard', icon: <Trophy className="h-5 w-5" />, path: '/leaderboard' },
     { title: 'Team', icon: <Users className="h-5 w-5" />, path: '/team' },
     { title: 'AI Assistant', icon: <Brain className="h-5 w-5" />, path: '/ai' },
@@ -50,30 +63,6 @@ export const Sidebar = ({ open }: SidebarProps) => {
   
   return (
     <div className="flex flex-col h-full sidebar-gradient border-r border-white/20 p-4 backdrop-blur-sm">
-      {/* Profile section */}
-      {currentUser && (
-        <div className="glass-card p-4 mb-6 rounded-xl">
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-full overflow-hidden bg-gradient-to-br from-blue-400 to-teal-500 p-0.5">
-              <div className="h-full w-full rounded-full overflow-hidden bg-white">
-                <img 
-                  src={currentUser.avatar} 
-                  alt={currentUser.name}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-            </div>
-            <div className="flex-1">
-              <div className="font-semibold text-sm">{currentUser.name}</div>
-              <div className="text-xs opacity-75 flex items-center gap-1">
-                <Trophy className="h-3 w-3" />
-                {completedGoalsCount} goals achieved
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      
       {/* Navigation */}
       <div className="space-y-1 flex-1">
         {navItems.map(item => (
@@ -88,7 +77,15 @@ export const Sidebar = ({ open }: SidebarProps) => {
               )}
             >
               {item.icon}
-              <span className="ml-2 font-medium">{item.title}</span>
+              <span className="ml-2 font-medium flex-1 text-left">{item.title}</span>
+              {item.badge !== undefined && item.badge > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="ml-auto h-5 px-1.5 flex items-center justify-center text-[10px] font-bold min-w-[20px] animate-pulse"
+                >
+                  {item.badge}
+                </Badge>
+              )}
             </Button>
           </Link>
         ))}
