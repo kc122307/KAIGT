@@ -29,7 +29,6 @@ export const GoalFilters = ({
   
   const statuses: (GoalStatus | 'All')[] = [
     'All', 
-    'Pending', 
     'In-Progress', 
     'Completed'
   ];

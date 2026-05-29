@@ -80,9 +80,6 @@ const TasksPage = () => {
                 <DropdownMenuRadioItem value="all">
                   All Tasks
                 </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="pending">
-                  Pending
-                </DropdownMenuRadioItem>
                 <DropdownMenuRadioItem value="in-progress">
                   In Progress
                 </DropdownMenuRadioItem>
