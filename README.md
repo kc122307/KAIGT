@@ -1,73 +1,153 @@
-# Welcome to your Lovable project
+# KAIGT — Goal Glimpse: Achieve Together with AI
 
-## Project info
+An AI‑powered productivity and goal management platform featuring coaching chat, smart goal suggestions, team collaboration, progress analytics, notifications, and real‑time activity tracking.
 
-**URL**: https://lovable.dev/projects/eb6c5e75-03e1-4ed6-847a-d752703b6c37
+## Overview
 
-## How can I edit this code?
+- Intelligent AI coach with multiple personality modes and optional voice interface
+- Smart, context‑aware goal suggestions and templates
+- Full goal lifecycle: create, edit, filter, track progress, and complete
+- Team invitations, collaboration, and notifications with Supabase real‑time
+- Rich dashboard with analytics, leaderboard, activity log, and achievements
+- Built with `React`, `TypeScript`, `Vite`, `Tailwind CSS`, and `shadcn-ui`
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+- Frontend: `React 18`, `TypeScript`, `Vite`
+- UI: `Tailwind CSS`, `shadcn-ui` (Radix UI), `lucide-react`
+- State: `zustand` store in `src/store/goalStore.ts`
+- Data: `@supabase/supabase-js` with RLS; real‑time channels
+- Async: `@tanstack/react-query`
+- Charts: `recharts`
+- Animations: `gsap`
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/eb6c5e75-03e1-4ed6-847a-d752703b6c37) and start prompting.
+## Features
 
-Changes made via Lovable will be committed automatically to this repo.
+- AI Productivity Coach: personalized coaching and recommendations
+- Smart Goal Suggestions: tailored to preferences and progress
+- Conversation History: revisit coaching insights and sessions
+- Personality Modes: motivational, analytical, supportive, strategic
+- Smart Templates: pre‑built, AI‑assisted goal frameworks
+- Voice Interface: optional voice commands and responses
+- Progress Analytics: visual insights into completion and patterns
+- Achievement System: milestones and streak tracking
+- Team Collaboration: invite members, collaborate with notifications
+- Activity Tracking: automatic logging with timestamps
+- Smart Notifications: deadlines, achievements, and updates
+- Intelligent Insights: AI‑powered productivity suggestions
 
-**Use your preferred IDE**
+## Key Pages & Routes
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- `/` Landing: marketing overview and feature highlights (`src/pages/LandingPage.tsx`)
+- `/login` Auth: email/password login and registration (`src/components/Auth/LoginForm.tsx`)
+- `/dashboard` Dashboard: main view (`src/pages/Index.tsx` → `Dashboard`)
+- `/goals` Goals: list, filters, details, edit (`src/pages/GoalsPage.tsx`)
+- `/tasks` Tasks: task checklist around goals (`src/pages/TasksPage.tsx`)
+- `/progress` Progress: analytics/graphs (`src/pages/ProgressPage.tsx`)
+- `/activity` Activity: activity log (`src/pages/ActivityPage.tsx`)
+- `/notifications` Notifications: inbox and counts (`src/pages/NotificationsPage.tsx`)
+- `/leaderboard` Leaderboard: rankings and profiles (`src/pages/LeaderboardPage.tsx`)
+- `/settings` Settings: user preferences (`src/pages/SettingsPage.tsx`)
+- `/team` Team: invitations, responses, list (`src/pages/TeamPage.tsx`)
+- `/ai` AI Coach: chat, history, suggestions, modes (`src/pages/AIPage.tsx`)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Architecture
 
-Follow these steps:
+- Routing: `react-router-dom` with protected routes in `src/App.tsx`
+- State: `zustand` store `useGoalStore` for auth, goals, activities, notifications
+- Data access: `src/services/api/*` calling Supabase tables with typed mapping
+- Realtime: Supabase `channel` listeners for invitations and notifications
+- UI components: `src/components/ui/*` (shadcn‑style primitives)
+- Pages: `src/pages/*` composed with feature components under `src/components/*`
+- Supabase client: `src/integrations/supabase/client.ts` using environment variables
+- Edge Functions: `supabase/functions/*` for AI coach, voice‑to‑text, invitations email
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Supabase Schema (tables used)
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+- `goals`: user goals with status, progress, deadlines
+- `activities`: audit trail of goal actions
+- `notifications`: user notifications (types: achievement, collaboration, etc.)
+- `profiles`: user profile data for leaderboard/stats
+- `team_members`: membership mapping for teams
+- `team_invitations`: invitation lifecycle (email/user based)
 
-# Step 3: Install the necessary dependencies.
-npm i
+## AI Coach Integration
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+- Primary: Supabase Edge Function `ai-coach` calling OpenRouter DeepSeek R1
+- Fallback: Direct OpenRouter call from frontend when edge fails
+- Context: personality, current goals, conversation history
+- Suggestions: optional JSON suggestions for goals, modes, templates
 
-**Edit a file directly in GitHub**
+## Team Invitations & Realtime
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- Invitations: create, send, accept/decline; email via `Resend` edge function
+- Realtime channels: listen to `team_invitations` and `notifications` changes
+- Notification bell and list components under `src/components/Team/*`
 
-**Use GitHub Codespaces**
+## Directory Structure
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- `src/components/AI/*`: AI coach, history, suggestions, modes, voice UI
+- `src/components/Dashboard/*`: dashboard, goal cards, detail modal, edit form, filters
+- `src/components/Team/*`: invitations, list, forms, hooks, types
+- `src/components/ui/*`: shadcn‑style UI primitives and utilities
+- `src/pages/*`: route pages for all features
+- `src/services/api/*`: goal, activity, notification, team, user services
+- `src/integrations/supabase/*`: typed client and types
+- `supabase/functions/*`: `ai-coach`, `voice-to-text`, `send-invitation-email`
+- `docs/*`: additional docs for setup and testing
 
-## What technologies are used for this project?
+## Setup
 
-This project is built with:
+Prerequisites:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- Node.js 18+ and `npm`
+- Supabase project with tables and RLS configured
 
-## How can I deploy this project?
+Install:
 
-Simply open [Lovable](https://lovable.dev/projects/eb6c5e75-03e1-4ed6-847a-d752703b6c37) and click on Share -> Publish.
+- `npm install`
 
-## Can I connect a custom domain to my Lovable project?
+Environment variables (create `.env.local`):
 
-Yes, you can!
+- Frontend:
+  - `VITE_SUPABASE_URL`
+  - `VITE_SUPABASE_ANON_KEY`
+  - `VITE_OPENROUTER_API_KEY` (or `VITE_DEEPSEEK_API_KEY`)
+- Supabase Edge Function secrets:
+  - `DEEPSEEK_API_KEY` (OpenRouter API key recommended)
+  - `SUPABASE_URL`
+  - `SUPABASE_ANON_KEY`
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Important: do not commit real API keys. The code includes fallback keys for local testing; you should override them with your own environment values.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## Scripts
+
+- `npm run dev` start local dev server
+- `npm run build` build production bundle
+- `npm run preview` preview built app
+- `npm run lint` run ESLint
+
+## Deploy Edge Functions
+
+- Install Supabase CLI: `npm i -g supabase`
+- Login: `supabase login`
+- Deploy all: `./deploy-edge-functions.ps1` (PowerShell)
+- Or individually: `supabase functions deploy ai-coach`
+
+## Troubleshooting
+
+- AI coach not responding: check API keys and see `AI_COACH_FIX_GUIDE.md`
+- 500 errors in AI function: see `DEBUG_500_ERROR.md`
+- OpenRouter/DeepSeek setup: see `OPENROUTER_SETUP.md` and `DEEPSEEK_SETUP.md`
+- Console fixes and diagnostics: see `CONSOLE_FIXES.md`
+
+## Development Notes
+
+- Protected routes redirect unauthenticated users to `/login`
+- `zustand` store initializes data on load and listens to auth changes
+- Supabase realtime keeps invitations/notifications in sync
+- UI built from composable primitives; prefer `src/components/ui/*`
+
+## License
+
+Proprietary or project‑specific. Add a license file if needed.
