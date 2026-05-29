@@ -454,6 +454,17 @@ export const useGoalStore = create<GoalState>((set, get) => ({
     
     try {
       const targetGoal = get().goals.find(g => g.id === id);
+      if (targetGoal && status === 'Completed') {
+        const computed = calculateHybridProgress({
+          created_at: targetGoal.created_at,
+          deadline: targetGoal.deadline,
+          completed_days: targetGoal.completed_days
+        });
+        if ((targetGoal.completed_days || 0) < computed.totalDuration) {
+          throw new Error(`Cannot complete goal yet. You need to check in for all ${computed.totalDuration} days. (Current: ${targetGoal.completed_days || 0}/${computed.totalDuration})`);
+        }
+      }
+
       if (targetGoal?.is_team_goal) {
         await updateTeamGoal(id, { status: mapGoalStatusToTeamStatus(status) });
       } else {
@@ -473,6 +484,17 @@ export const useGoalStore = create<GoalState>((set, get) => ({
     
     try {
       const targetGoal = get().goals.find(g => g.id === id);
+      if (targetGoal && progress === 100) {
+        const computed = calculateHybridProgress({
+          created_at: targetGoal.created_at,
+          deadline: targetGoal.deadline,
+          completed_days: targetGoal.completed_days
+        });
+        if ((targetGoal.completed_days || 0) < computed.totalDuration) {
+          throw new Error(`Cannot complete goal yet. You need to check in for all ${computed.totalDuration} days. (Current: ${targetGoal.completed_days || 0}/${computed.totalDuration})`);
+        }
+      }
+
       if (targetGoal?.is_team_goal) {
         await updateTeamGoal(id, { progress });
       } else {

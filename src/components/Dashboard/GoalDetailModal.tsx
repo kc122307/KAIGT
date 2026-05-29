@@ -8,6 +8,7 @@ import { format } from 'date-fns';
 import { EditGoalForm } from "./EditGoalForm";
 import { GoalStatus } from "../../types";
 import { cn } from "@/lib/utils";
+import { toast } from "@/components/ui/use-toast";
 
 interface GoalDetailModalProps {
   goalId: string;
@@ -36,8 +37,16 @@ export const GoalDetailModal = ({ goalId, onClose }: GoalDetailModalProps) => {
   const daysRemaining = Math.ceil((goal.deadline.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
   const isOverdue = daysRemaining < 0 && goal.status !== 'Completed';
   
-  const handleStatusChange = (newStatus: GoalStatus) => {
-    updateGoalStatus(goal.id, newStatus);
+  const handleStatusChange = async (newStatus: GoalStatus) => {
+    try {
+      await updateGoalStatus(goal.id, newStatus);
+    } catch (err: any) {
+      toast({
+        title: "Action blocked",
+        description: err.message || "Failed to update goal status",
+        variant: "destructive"
+      });
+    }
   };
   
   const handleDeleteGoal = () => {
@@ -211,6 +220,8 @@ export const GoalDetailModal = ({ goalId, onClose }: GoalDetailModalProps) => {
                     variant={goal.status === 'Completed' ? 'default' : 'outline'}
                     size="sm"
                     className="flex-1"
+                    disabled={(goal.completed_days || 0) < totalDuration}
+                    title={(goal.completed_days || 0) < totalDuration ? `Requires all ${totalDuration} check-ins` : undefined}
                     onClick={() => handleStatusChange('Completed')}
                   >
                     Completed

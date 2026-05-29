@@ -17,6 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useGSAP } from "../hooks/useGSAP";
+import { toast } from "@/components/ui/use-toast";
 
 const TasksPage = () => {
   const goals = useGoalStore((state) => state.goals);
@@ -41,8 +42,16 @@ const TasksPage = () => {
     return acc;
   }, {} as Record<string, typeof goals>);
 
-  const handleProgressChange = (goalId: string, isCompleted: boolean) => {
-    updateGoalProgress(goalId, isCompleted ? 100 : 0);
+  const handleProgressChange = async (goalId: string, isCompleted: boolean) => {
+    try {
+      await updateGoalProgress(goalId, isCompleted ? 100 : 0);
+    } catch (err: any) {
+      toast({
+        title: "Action blocked",
+        description: err.message || "Failed to update task progress",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
