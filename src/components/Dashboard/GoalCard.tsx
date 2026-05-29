@@ -6,6 +6,7 @@ import { Calendar, Clock, Check, Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useGoalStore, calculateHybridProgress, getLocalDateString } from '../../store/goalStore';
+import { toast } from '@/components/ui/use-toast';
 
 interface GoalCardProps {
   goal: Goal;
@@ -99,9 +100,17 @@ export const GoalCard = ({ goal, onClick }: GoalCardProps) => {
           </div>
           
           <button
-            onClick={(e) => {
+            onClick={async (e) => {
               e.stopPropagation();
-              checkInGoalAction(goal.id);
+              try {
+                await checkInGoalAction(goal.id);
+              } catch (err: any) {
+                toast({
+                  title: "Check-in failed",
+                  description: err.message || "Failed to check in.",
+                  variant: "destructive"
+                });
+              }
             }}
             disabled={isCheckedInToday || goal.status === 'Completed'}
             className={cn(

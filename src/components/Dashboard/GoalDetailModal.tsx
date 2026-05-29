@@ -49,6 +49,18 @@ export const GoalDetailModal = ({ goalId, onClose }: GoalDetailModalProps) => {
     }
   };
   
+  const handleCheckIn = async () => {
+    try {
+      await checkInGoalAction(goal.id);
+    } catch (err: any) {
+      toast({
+        title: "Check-in failed",
+        description: err.message || "Failed to check in.",
+        variant: "destructive"
+      });
+    }
+  };
+  
   const handleDeleteGoal = () => {
     deleteGoal(goal.id);
     onClose();
@@ -135,7 +147,7 @@ export const GoalDetailModal = ({ goalId, onClose }: GoalDetailModalProps) => {
                 </div>
 
                 <Button
-                  onClick={() => checkInGoalAction(goal.id)}
+                  onClick={handleCheckIn}
                   disabled={isCheckedInToday || goal.status === 'Completed'}
                   className={cn(
                     "w-full py-6 text-sm font-semibold flex items-center justify-center gap-2 rounded-xl transition-all duration-300",
