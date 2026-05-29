@@ -216,7 +216,7 @@ export const useGoalStore = create<GoalState>((set, get) => ({
             deadline: goal.deadline,
             completed_days: goal.completed_days
           });
-          const finalStatus = computed.overallProgress >= 100 ? 'Completed' : goal.status;
+          const finalStatus = (goal.completed_days || 0) >= computed.totalDuration ? 'Completed' : goal.status;
           return {
             ...goal,
             progress: computed.overallProgress,
@@ -238,7 +238,7 @@ export const useGoalStore = create<GoalState>((set, get) => ({
                     completed_days: goal.completed_days
                   });
                   const mappedStatus = mapTeamStatusToGoalStatus(goal.status);
-                  const finalStatus = computed.overallProgress >= 100 ? 'Completed' : mappedStatus;
+                  const finalStatus = (goal.completed_days || 0) >= computed.totalDuration ? 'Completed' : mappedStatus;
                   return {
                     id: goal.id,
                     title: goal.title,
@@ -522,7 +522,7 @@ export const useGoalStore = create<GoalState>((set, get) => ({
       });
 
       const newProgress = computed.overallProgress;
-      const newStatus: GoalStatus = newProgress >= 100 ? 'Completed' : 'In-Progress';
+      const newStatus: GoalStatus = newCompletedDays >= computed.totalDuration ? 'Completed' : 'In-Progress';
 
       if (targetGoal.is_team_goal) {
         await checkInTeamGoal(id, {
